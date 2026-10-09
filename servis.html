@@ -439,6 +439,7 @@
       .then(r => {
         durum.kayitlar[anahtar] = r.kayitlar;
         durum.yaklasan = r.yaklasan || [];
+        if (Array.isArray(r.izinler)) durum.izinler = r.izinler;
         personelGuncelle(r.personel);
         onbellekYaz(anahtar);
         durum.yukleniyor = false;
@@ -566,6 +567,7 @@
   function saatEkle(s, dk) { const i = SAATLER.indexOf(s) + dk / 30; return SAATLER[Math.min(i, SAATLER.length - 1)]; }
   $('fBas').addEventListener('change', () => { if ($('fBit').value <= $('fBas').value) $('fBit').value = saatEkle($('fBas').value, 120); cakismaTemizle(); });
   ['fBit', 'fTarih'].forEach(id => $(id).addEventListener('change', cakismaTemizle));
+  $('fTarih').addEventListener('change', () => personelCiz());
 
   let seciliPersonel = [];
   let seciliAcan = '';
@@ -577,12 +579,13 @@
     sel.value = seciliAcan;
   }
   $('fAcan').addEventListener('change', () => { seciliAcan = $('fAcan').value; });
+  function izinliMi(ad, gun) { return !!gun && (durum.izinler || []).some(z => z.kisi === ad && z.bas <= gun && z.bit >= gun); }
   function personelCiz() {
     const k = $('personelCipler'); k.textContent = '';
     const liste = Array.from(new Set(durum.personel.concat(seciliPersonel))).sort((a, b) => a.localeCompare(b, 'tr'));
     liste.forEach(ad => {
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'cip'; b.textContent = ad;
+      b.type = 'button'; b.className = 'cip'; b.textContent = ad + (izinliMi(ad, $('fTarih').value) ? ' · izinli' : '');
       b.setAttribute('aria-pressed', seciliPersonel.indexOf(ad) >= 0 ? 'true' : 'false');
       b.addEventListener('click', () => {
         const i = seciliPersonel.indexOf(ad);
@@ -717,6 +720,15 @@
     const e = eksikler(v);
     if (e.length) { $('formHata').hidden = false; $('formHata').textContent = 'Eksik: ' + e.join(', ') + '.'; $('formKatman').scrollTop = 0; return; }
     if (v.bit <= v.bas) { $('formHata').hidden = false; $('formHata').textContent = 'Bitiş saati başlangıçtan sonra olmalı.'; return; }
+    const izinli = v.personel.filter(p => izinliMi(p, v.tarih));
+    if (izinli.length && !durum.onayBekliyor) {
+      durum.onayBekliyor = true;
+      $('formUyari').hidden = false;
+      $('formUyari').textContent = 'Dikkat: ' + izinli.join(', ') + ' bu tarihte izinli. Yine de kaydetmek için butona bir kez daha basın.';
+      $('kaydetDugme').classList.add('uyar'); $('kaydetDugme').textContent = 'Yine de kaydet';
+      $('formKatman').scrollTop = 0;
+      return;
+    }
     const c = yerelCakisma(v);
     if (c.length && !durum.onayBekliyor) {
       durum.onayBekliyor = true;
