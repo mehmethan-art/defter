@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Halı Künyesi · Halıcızade</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#f6f2ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Defter">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta charset="utf-8">
+<style>
+  :root{
+    --zemin:#f6f2ec; --kart:#ffffff; --yazi:#2b2622; --soluk:#7a6f66; --cizgi:#e3dcd3;
+    --vurgu:#7a2e2a; --vurgu-acik:#f3e6e3; --hata:#b3261e; --tamam:#2e6b3a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--zemin);color:var(--yazi);
+    font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{padding:20px 16px 6px;max-width:640px;margin:0 auto}
+  header .marka{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--soluk)}
+  header h1{margin:4px 0 0;font-size:22px}
+  .ilerleme{max-width:640px;margin:10px auto 0;padding:0 16px}
+  .ilerleme .ray{height:8px;background:var(--cizgi);border-radius:99px;overflow:hidden}
+  .ilerleme .dolgu{height:100%;width:25%;background:var(--vurgu);border-radius:99px;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+  .ilerleme .adimlar{display:flex;justify-content:space-between;font-size:12px;color:var(--soluk);margin-top:6px}
+  .ilerleme .adimlar span.aktif{color:var(--vurgu);font-weight:700}
+  form{padding:0 12px 130px;max-width:640px;margin:0 auto}
+  section{background:var(--kart);border:1px solid var(--cizgi);border-radius:16px;padding:18px 16px;margin:14px 0;display:none}
+  section.aktif{display:block;animation:gir .35s ease}
+  section.geri{animation:girGeri .35s ease}
+  @keyframes gir{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+  @keyframes girGeri{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+  section h2{margin:0 0 4px;font-size:22px}
+  section .alt-baslik{margin:0 0 16px;color:var(--soluk);font-size:15px}
+  .alan{margin:0 0 18px}
+  .alan:last-child{margin-bottom:0}
+  label.bas{display:block;font-weight:600;margin:0 0 6px}
+  label.bas small{font-weight:400;color:var(--soluk)}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;font:inherit;padding:13px 12px;border:1px solid var(--cizgi);border-radius:12px;background:#fff;color:var(--yazi);
+    -webkit-appearance:none;appearance:none}
+  select{background-image:linear-gradient(45deg,transparent 50%,var(--soluk) 50%),linear-gradient(135deg,var(--soluk) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+  textarea{min-height:80px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--vurgu);outline-offset:-1px}
+  .yan{display:flex;gap:10px}
+  .yan > *{flex:1;min-width:0}
+  .cipler{display:flex;flex-wrap:wrap;gap:8px}
+  .cip{border:1px solid var(--cizgi);background:#fff;border-radius:999px;padding:10px 15px;font:inherit;font-size:15px;color:var(--yazi);cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;transition:transform .12s ease,background .15s ease}
+  .cip:active{transform:scale(.94)}
+  .cip[aria-pressed=true]{background:var(--vurgu);border-color:var(--vurgu);color:#fff}
+  .cip[aria-pressed=true]{animation:pop .25s ease}
+  @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+  .leke{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex:none}
+  .cip[aria-pressed=true] .leke{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.5)}
+  .bilgi{font-size:14px;color:var(--soluk);margin-top:6px}
+  .uyari{font-size:14px;color:var(--hata);margin-top:6px}
+  .alan-rozet{display:inline-block;margin-top:8px;padding:6px 12px;border-radius:99px;background:var(--vurgu-acik);color:var(--vurgu);font-weight:700;font-size:15px}
+  .fotolar{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .foto{position:relative;border:2px dashed var(--cizgi);border-radius:14px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-size:14px;color:var(--soluk);overflow:hidden;background:#faf8f5}
+  .foto.zorunlu{border-color:var(--vurgu);color:var(--vurgu)}
+  .foto .simge{font-size:28px;display:block;margin-bottom:4px}
+  .foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .foto .etiket{position:relative;z-index:1;padding:8px 8px 52px;pointer-events:none}
+  .foto.dolu{border-style:solid;border-color:var(--tamam)}
+  .foto.dolu .etiket{background:rgba(0,0,0,.55);color:#fff;border-radius:8px;position:absolute;top:8px;left:8px;right:8px;padding:6px 8px;font-size:13px}
+  .foto-dugmeler{position:absolute;left:6px;right:6px;bottom:6px;display:flex;gap:6px;z-index:2}
+  .foto-dugmeler label{position:relative;flex:1;background:#fff;border:1px solid var(--cizgi);border-radius:10px;padding:9px 4px;
+    font-size:13px;font-weight:600;color:var(--yazi);text-align:center;cursor:pointer;white-space:nowrap;overflow:hidden}
+  .foto-dugmeler label.kamera{background:var(--vurgu);border-color:var(--vurgu);color:#fff}
+  .foto-dugmeler input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+  .anahtar{display:flex;align-items:center;gap:12px;width:100%;border:1px solid var(--cizgi);background:#fff;border-radius:14px;padding:12px 14px;
+    font:inherit;color:var(--yazi);cursor:pointer;text-align:left}
+  .anahtar .ray2{width:46px;height:28px;border-radius:99px;background:var(--cizgi);position:relative;flex:none;transition:background .2s}
+  .anahtar .ray2::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+  .anahtar[aria-pressed=true] .ray2{background:var(--tamam)}
+  .anahtar[aria-pressed=true] .ray2::after{transform:translateX(18px)}
+  .anahtar .durum{margin-left:auto;color:var(--soluk);font-size:14px}
+  .ek-girdi{margin-top:10px}
+  .alt-cubuk{position:fixed;left:0;right:0;bottom:0;background:rgba(246,242,236,.96);border-top:1px solid var(--cizgi);
+    padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:5}
+  .alt-cubuk .ic{display:flex;gap:10px;max-width:640px;margin:0 auto}
+  .alt-cubuk button{padding:16px;border:0;border-radius:14px;font:inherit;font-weight:700;font-size:17px;cursor:pointer}
+  #ileri{flex:1;background:var(--vurgu);color:#fff}
+  #geri{background:#fff;color:var(--yazi);border:1px solid var(--cizgi);padding:16px 20px}
+  .alt-cubuk button:disabled{opacity:.6}
+  .hata-kutu{background:#fdecea;color:var(--hata);border-radius:12px;padding:12px;margin:12px 0 0;display:none}
+  .sallan{animation:sallan .4s ease}
+  @keyframes sallan{0%,100%{transform:none}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  .eksik{outline:2px solid var(--hata);outline-offset:4px;border-radius:12px}
+  .sonuc{display:none;padding:56px 20px;text-align:center;max-width:520px;margin:0 auto;position:relative;z-index:3}
+  .sonuc .buyuk{font-size:64px;line-height:1;animation:pop .6s ease}
+  .sonuc .no{font-size:32px;font-weight:800;margin:14px 0 6px;letter-spacing:.02em}
+  .sonuc .gun{display:inline-block;margin:6px 0 14px;padding:8px 14px;border-radius:99px;background:var(--vurgu-acik);color:var(--vurgu);font-weight:700}
+  .sonuc button{margin-top:24px;padding:16px 26px;border:0;border-radius:14px;background:var(--vurgu);color:#fff;font:inherit;font-weight:700;font-size:17px}
+  #konfeti{position:fixed;inset:0;pointer-events:none;z-index:4}
+  .gizli{display:none !important}
+  .geri-menu{text-decoration:none;color:var(--vurgu)!important;font-weight:700;letter-spacing:.12em}
+</style>
+</head>
+<body>
+<header>
+  <a class="marka geri-menu" href="./">‹ Menü</a>
+  <h1 id="selam">Yeni bir halı geldi!</h1>
+</header>
+
+<div class="ilerleme" id="ilerleme">
+  <div class="ray"><div class="dolgu" id="dolgu"></div></div>
+  <div class="adimlar"><span>Geliş</span><span>Halı</span><span>Ölçü</span><span>Poz</span></div>
+</div>
+
+<form id="form" novalidate>
+  <div class="hata-kutu" id="hata"></div>
+
+  
+  <section data-adim="0">
+    <h2>Nereden geldi?</h2>
+    <p class="alt-baslik">Önce halının kimliği.</p>
+    <div class="alan" data-ad="acan">
+      <label class="bas" for="acan">Künyeyi açan</label>
+      <input type="text" id="acan" autocomplete="given-name" autocapitalize="words" placeholder="Adınız">
+      <div class="bilgi">Bu telefon adınızı hatırlar.</div>
+    </div>
+    <div class="alan" data-ad="tedarikci">
+      <label class="bas" for="tedarikci">Tedarikçi</label>
+      <select id="tedarikci"></select>
+      <input type="text" id="tedarikciDiger" class="ek-girdi gizli" autocapitalize="words" placeholder="Tedarikçinin adı">
+    </div>
+    <div class="alan" data-ad="seri">
+      <label class="bas" for="seri">Seri</label>
+      <input type="text" id="seri" list="seriListe" autocapitalize="words" placeholder="Rast, Zade, Heritage…">
+      <datalist id="seriListe"></datalist>
+    </div>
+    <div class="alan">
+      <label class="bas" for="fatura">Fatura / irsaliye no <small>(isteğe bağlı)</small></label>
+      <input type="text" id="fatura">
+    </div>
+    <div class="alan">
+      <label class="bas" for="alis">Alış fiyatı <small>(isteğe bağlı)</small></label>
+      <div class="yan">
+        <input type="text" id="alis" inputmode="decimal" placeholder="0" style="flex:2">
+        <select id="paraBirimi" style="flex:1"></select>
+      </div>
+    </div>
+    <div class="alan">
+      <label class="bas" for="satis">Satış fiyatı <small>(isteğe bağlı)</small></label>
+      <div class="yan">
+        <input type="text" id="satis" inputmode="decimal" placeholder="0" style="flex:2">
+        <select id="satisParaBirimi" style="flex:1"></select>
+      </div>
+    </div>
+  </section>
+
+  
+  <section data-adim="1">
+    <h2>Halıyı tanıyalım</h2>
+    <p class="alt-baslik">Dokuması, deseni, rengi, ipliği.</p>
+    <div class="alan" data-ad="urunTipi">
+      <label class="bas" for="urunTipi">Ürün tipi</label>
+      <select id="urunTipi"></select>
+    </div>
+    <div class="alan" data-ad="uretimYeri">
+      <label class="bas" for="uretimYeri">Üretim yeri</label>
+      <select id="uretimYeri"></select>
+    </div>
+    <div class="alan" data-ad="desen">
+      <label class="bas">Desen</label>
+      <div class="cipler" id="desen" data-tek></div>
+      <input type="text" id="desenDiger" class="ek-girdi gizli" autocapitalize="words" placeholder="Desenin adı">
+    </div>
+    <div class="alan" data-ad="tarz">
+      <label class="bas">Tarz</label>
+      <div class="cipler" id="tarz" data-tek></div>
+    </div>
+    <div class="alan" data-ad="anaRenk">
+      <label class="bas">Ana renk <small>(bir tane)</small></label>
+      <div class="cipler" id="anaRenk" data-tek></div>
+    </div>
+    <div class="alan">
+      <label class="bas">Destekleyici renkler <small>(isteğe bağlı, istediğiniz kadar)</small></label>
+      <div class="cipler" id="destekRenk"></div>
+    </div>
+    <div class="alan" data-ad="iplik">
+      <label class="bas">İplik <small>(bütün lifler, çözgü dahil)</small></label>
+      <div class="cipler" id="iplik"></div>
+      <div class="uyari gizli" id="iplikUyari"></div>
+    </div>
+    <div class="alan">
+      <label class="bas">Kök boya</label>
+      <button type="button" class="anahtar" id="kokBoya" aria-pressed="false"><span class="ray2"></span><span>Kök boyalı</span><span class="durum" id="kokBoyaDurum">Yok</span></button>
+    </div>
+    <div class="alan" data-ad="temizlik">
+      <label class="bas">Temizlik</label>
+      <div class="cipler" id="temizlik" data-tek></div>
+    </div>
+    <div class="alan">
+      <label class="bas" for="antika">Antika / yaş <small>(isteğe bağlı, yalnız belgeliyse)</small></label>
+      <input type="text" id="antika" placeholder="ör. 1950'ler, ~70 yıllık">
+    </div>
+  </section>
+
+  
+  <section data-adim="2">
+    <h2>Metreyi çıkaralım</h2>
+    <p class="alt-baslik">Ölçü ve halının hali.</p>
+    <div class="alan">
+      <label class="bas">Şekil</label>
+      <div class="cipler" id="sekil" data-tek></div>
+    </div>
+    <div class="alan" data-ad="olcu">
+      <div class="yan" id="dikdortgen">
+        <div><label class="bas" for="en">En (cm)</label><input type="text" id="en" inputmode="decimal"></div>
+        <div><label class="bas" for="boy">Boy (cm)</label><input type="text" id="boy" inputmode="decimal"></div>
+      </div>
+      <div id="yuvarlak" class="gizli">
+        <label class="bas" for="cap">Çap (cm)</label><input type="text" id="cap" inputmode="decimal">
+      </div>
+      <div id="m2Bilgi"></div>
+    </div>
+    <div class="alan">
+      <label class="bas" for="adet">Adet</label>
+      <input type="number" id="adet" inputmode="numeric" min="1" value="1">
+    </div>
+    <div class="alan" data-ad="kondisyon">
+      <label class="bas">Kondisyon</label>
+      <div class="cipler" id="kondisyon" data-tek></div>
+    </div>
+    <div class="alan">
+      <label class="bas" for="not">Not <small>(isteğe bağlı)</small></label>
+      <textarea id="not"></textarea>
+    </div>
+  </section>
+
+  
+  <section data-adim="3">
+    <h2>Poz verme zamanı</h2>
+    <p class="alt-baslik">Halının tamamı kadraja girsin; gün ışığında, flaşsız.</p>
+    <div class="fotolar">
+      <div class="foto zorunlu" data-ad="fotoOn" data-kutu="on"><span class="etiket"></span></div>
+      <div class="foto" data-kutu="arka"><span class="etiket"></span></div>
+      <div class="foto" data-kutu="sacak"><span class="etiket"></span></div>
+      <div class="foto" data-kutu="doku"><span class="etiket"></span></div>
+    </div>
+  </section>
+</form>
+
+<div class="alt-cubuk" id="altCubuk">
+  <div class="ic">
+    <button type="button" id="geri" class="gizli">Geri</button>
+    <button type="button" id="ileri">Devam</button>
+  </div>
+</div>
+
+<canvas id="konfeti"></canvas>
+
+<div class="sonuc" id="sonuc">
+  <div class="buyuk">🎉</div>
+  <div class="no" id="sonucNo"></div>
+  <div class="gun" id="sonucGun"></div>
+  <div id="sonucMetin"></div>
+  <button type="button" id="yeni">Sıradaki halı</button>
+</div>
+
+<script>
+  const EXEC = 'https://script.google.com/macros/s/AKfycbxPb8YtbNeb3djhwXejmlLairxxiba7KviGjnzifq0pLzXhbt3vI4WFeY6TJaJ2XuPIgA/exec';
+  const L = {"tedarikci": ["Halıcızade", "Doğuş Halı", "Eko Halı", "Empera", "Caché İstanbul", "Studio Potato", "Diğer"], "urunTipi": ["El Dokuması Halı", "El Dokuma Kilim", "Tezgah Dokuma Halı", "Tezgah Dokuma Kilim", "Makine Halısı", "Makine Dokuma Kilim", "Dijital Baskı Halı", "Deri Halı", "Deri - Post Halı", "Post", "Seccade", "Deri Yastık", "Aksesuar"], "uretimYeri": ["Türkiye", "Hindistan", "Afganistan", "Pakistan", "İran", "Nepal", "Diğer"], "tarz": ["Klasik", "Otantik", "Modern"], "renk": ["Antrasit", "Bakır", "Bej", "Beyaz", "Bordo", "Gri", "Kahverengi", "Kırmızı", "Krem", "Lacivert", "Mavi", "Mor", "Pembe", "Rengarenk", "Sarı", "Siyah", "Terra", "Turkuaz", "Turuncu", "Vizon", "Yeşil"], "iplik": ["Yün", "İpek", "Pamuk", "Viskon", "Bambu Viskon", "Tencel®", "Kendir", "Jüt / Hasır", "Akrilik / Sentetik", "Deri", "Kuzu Postu"], "desen": ["Afgan", "Anadolu", "Çerçeve", "Çiçek", "Çizgi", "Damask", "Etnik", "Geometrik", "İskandinav", "Karabağ", "Memlük", "Patchwork", "Sade", "Soyut", "Uşak", "Vintage", "Yağcıbedir", "Diğer"], "temizlik": ["Profesyonel Yıkama", "Makinede Yıkanabilir", "Silinebilir"], "kondisyon": ["Yeni", "Temiz İkinci El", "Sandık Eskisi"], "paraBirimi": ["TL", "USD", "EUR"], "seri": ["Anadolu Şal", "Başbaşa", "Efsun", "Gessi", "Günyolu", "Harem", "Heritage", "Kadim", "Kehribar", "Kendir", "Maison", "Mihman", "Nostalji", "Ottoman", "Pinhan", "Rast", "Retro", "Sekoya", "Sisal", "Taftan", "Tempus", "Velvet", "Versace", "Zade", "Zara", "Zima", "Şahzade"]};
+  function sunucu(govde, deneme) {
+    deneme = deneme || 0;
+    return fetch(EXEC, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(govde) })
+      .then(r => r.json())
+      .then(r => { if (!r.ok) { const e = new Error(r.hata || 'Sunucu hatası'); e.sunucu = true; throw e; } return r; })
+      .catch(e => {
+        if (e.sunucu || deneme >= 3) throw e;
+        return new Promise(c => setTimeout(c, 1500 * (deneme + 1))).then(() => sunucu(govde, deneme + 1));
+      });
+  }
+  const $ = id => document.getElementById(id);
+  const foto = {};
+  const RENK = {
+    'Antrasit':'#383e42','Bakır':'#b87333','Bej':'#d9c7a7','Beyaz':'#ffffff','Bordo':'#7a1f2b','Gri':'#9a9a9a',
+    'Kahverengi':'#6b4423','Kırmızı':'#c0392b','Krem':'#f3e9d2','Lacivert':'#1f2a50','Mavi':'#3f6fb5','Mor':'#6c3f8f',
+    'Pembe':'#e8a0b4','Rengarenk':'conic-gradient(#c0392b,#e8c33a,#4e8a4a,#3f6fb5,#6c3f8f,#c0392b)','Sarı':'#e8c33a',
+    'Siyah':'#111111','Terra':'#c0603d','Turkuaz':'#2fb3b0','Turuncu':'#e67e22','Vizon':'#9c8b7a','Yeşil':'#4e8a4a'
+  };
+  const ADIM_ALANLARI = [
+    ['acan', 'tedarikci', 'seri'],
+    ['urunTipi', 'uretimYeri', 'desen', 'tarz', 'anaRenk', 'iplik', 'temizlik'],
+    ['olcu', 'kondisyon'],
+    ['fotoOn']
+  ];
+  const ETIKET = {
+    acan:'Künyeyi açan', tedarikci:'Tedarikçi', seri:'Seri', urunTipi:'Ürün tipi', uretimYeri:'Üretim yeri',
+    desen:'Desen', tarz:'Tarz', anaRenk:'Ana renk', iplik:'İplik', temizlik:'Temizlik',
+    olcu:'Ölçü', kondisyon:'Kondisyon', fotoOn:'Ön yüz fotoğrafı'
+  };
+  let adim = 0;
+  const titret = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+   
+  function secenekDoldur(id, liste, bos) {
+    $(id).innerHTML = (bos ? '<option value="">' + bos + '</option>' : '') + liste.map(x => '<option>' + x + '</option>').join('');
+  }
+  secenekDoldur('tedarikci', L.tedarikci, 'Seçin');
+  secenekDoldur('urunTipi', L.urunTipi, 'Seçin');
+  secenekDoldur('uretimYeri', L.uretimYeri, 'Seçin');
+  secenekDoldur('paraBirimi', L.paraBirimi);
+  secenekDoldur('satisParaBirimi', L.paraBirimi);
+  $('seriListe').innerHTML = L.seri.map(x => '<option value="' + x + '">').join('');
+
+  function cipDoldur(id, liste, lekeli) {
+    const kutu = $(id), tek = kutu.hasAttribute('data-tek');
+    kutu.innerHTML = '';
+    liste.forEach(deger => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'cip'; b.dataset.deger = deger; b.setAttribute('aria-pressed', 'false');
+      if (lekeli) {
+        const l = document.createElement('span'); l.className = 'leke'; l.style.background = RENK[deger] || '#ccc'; b.appendChild(l);
+      }
+      b.appendChild(document.createTextNode(deger));
+      b.addEventListener('click', () => {
+        const acik = b.getAttribute('aria-pressed') === 'true';
+        if (tek) kutu.querySelectorAll('.cip').forEach(x => x.setAttribute('aria-pressed', 'false'));
+        b.setAttribute('aria-pressed', tek ? 'true' : String(!acik));
+        titret(8);
+        kutu.dispatchEvent(new Event('degisti'));
+      });
+      kutu.appendChild(b);
+    });
+  }
+  const secili = id => Array.from($(id).querySelectorAll('.cip[aria-pressed=true]')).map(b => b.dataset.deger);
+  ['tarz', 'desen', 'iplik', 'temizlik', 'kondisyon'].forEach(id => cipDoldur(id, L[id]));
+  cipDoldur('anaRenk', L.renk, true);
+  cipDoldur('destekRenk', L.renk, true);
+
+   
+  function digerGuncelle() {
+    const tAcik = $('tedarikci').value === 'Diğer', dAcik = secili('desen')[0] === 'Diğer';
+    $('tedarikciDiger').classList.toggle('gizli', !tAcik);
+    $('desenDiger').classList.toggle('gizli', !dAcik);
+    return { tAcik, dAcik };
+  }
+  $('tedarikci').addEventListener('change', () => { if (digerGuncelle().tAcik) $('tedarikciDiger').focus(); });
+  $('desen').addEventListener('degisti', () => { if (digerGuncelle().dAcik) $('desenDiger').focus(); });
+
+   
+  function renkGuncelle() {
+    const ana = secili('anaRenk')[0];
+    $('destekRenk').querySelectorAll('.cip').forEach(b => {
+      const ayni = b.dataset.deger === ana;
+      b.classList.toggle('gizli', ayni);
+      if (ayni) b.setAttribute('aria-pressed', 'false');
+    });
+  }
+  $('anaRenk').addEventListener('degisti', renkGuncelle);
+
+   
+  function kokBoyaAyarla(var_) {
+    $('kokBoya').setAttribute('aria-pressed', String(var_));
+    $('kokBoyaDurum').textContent = var_ ? 'Var' : 'Yok';
+  }
+  $('kokBoya').addEventListener('click', () => { kokBoyaAyarla($('kokBoya').getAttribute('aria-pressed') !== 'true'); titret(8); });
+  cipDoldur('sekil', ['Dikdörtgen', 'Yuvarlak']);
+  $('sekil').querySelector('.cip').setAttribute('aria-pressed', 'true');
+
+   
+  function selamla() {
+    const ad = $('acan').value.trim().split(' ')[0];
+    $('selam').textContent = ad ? 'Merhaba ' + ad + ', yeni bir halı geldi!' : 'Yeni bir halı geldi!';
+  }
+  try { $('acan').value = localStorage.getItem('hz_kunye_acan') || localStorage.getItem('hz_servis_kim') || ''; } catch (e) {}
+  $('acan').addEventListener('input', selamla);
+  selamla();
+
+   
+  function sayi(x) {
+    let s = String(x || '').trim().replace(/\s/g, '');
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    const n = Number(s); return isNaN(n) ? 0 : n;
+  }
+  const yuvarlakMi = () => secili('sekil')[0] === 'Yuvarlak';
+  function olcuGuncelle() {
+    $('dikdortgen').classList.toggle('gizli', yuvarlakMi());
+    $('yuvarlak').classList.toggle('gizli', !yuvarlakMi());
+    let m2 = yuvarlakMi() ? Math.PI * Math.pow(sayi($('cap').value) / 200, 2) : sayi($('en').value) * sayi($('boy').value) / 10000;
+    $('m2Bilgi').innerHTML = m2 > 0
+      ? '<span class="alan-rozet">' + m2.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ' m²</span>' : '';
+  }
+  $('sekil').addEventListener('degisti', olcuGuncelle);
+  ['en', 'boy', 'cap'].forEach(id => $(id).addEventListener('input', olcuGuncelle));
+
+   
+  function iplikKontrol() {
+    const ip = secili('iplik'), yer = $('uretimYeri').value, u = $('iplikUyari');
+    const uyar = (yer === 'Afganistan' || yer === 'Pakistan') && ip.includes('Yün') && ip.includes('Akrilik / Sentetik') && !ip.includes('Pamuk');
+    u.textContent = uyar ? 'Afganistan/Pakistan menşeli yün + sentetik halılarda pamuk da bulunur — pamuğu işaretlemeyi unutmayın.' : '';
+    u.classList.toggle('gizli', !uyar);
+  }
+  $('iplik').addEventListener('degisti', iplikKontrol);
+  $('uretimYeri').addEventListener('change', iplikKontrol);
+
+   
+  const FOTO_AD = { on: 'Ön yüz', arka: 'Arka yüz', sacak: 'Kenar ve saçak', doku: 'Yakın doku' };
+  const FOTO_ILK = {
+    on: '<span class="simge">📷</span>Ön yüz<br><b>zorunlu</b>', arka: '<span class="simge">🔄</span>Arka yüz',
+    sacak: '<span class="simge">🧵</span>Kenar ve saçak', doku: '<span class="simge">🔍</span>Yakın doku'
+  };
+  function kucult(dosya, enBuyuk) {
+    return new Promise((coz, reddet) => {
+      const img = new Image(), url = URL.createObjectURL(dosya);
+      img.onload = () => {
+        const o = Math.min(1, enBuyuk / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * o); c.height = Math.round(img.naturalHeight * o);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        coz(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reddet(new Error('Fotoğraf okunamadı')); };
+      img.src = url;
+    });
+  }
+  function fotoKutuHazirla(kutu) {
+    const k = kutu.dataset.kutu;
+    kutu.classList.remove('dolu');
+    const img = kutu.querySelector('img'); if (img) img.remove();
+    kutu.querySelector('.etiket').innerHTML = FOTO_ILK[k];
+    const eski = kutu.querySelector('.foto-dugmeler'); if (eski) eski.remove();
+    const d = document.createElement('div'); d.className = 'foto-dugmeler';
+    d.innerHTML =
+      '<label class="kamera">📸 Çek<input type="file" accept="image/*" capture="environment" data-foto="' + k + '"></label>' +
+      '<label>🖼️ Galeri<input type="file" accept="image/*" data-foto="' + k + '"></label>';
+    kutu.appendChild(d);
+    d.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => fotoSecildi(inp, kutu)));
+  }
+  async function fotoSecildi(inp, kutu) {
+    const k = kutu.dataset.kutu;
+    if (!inp.files || !inp.files[0]) return;
+    kutu.querySelector('.etiket').textContent = 'Hazırlanıyor…';
+    try {
+      const dataUrl = await kucult(inp.files[0], 1600);
+      foto[k] = dataUrl.split(',')[1];
+      let img = kutu.querySelector('img');
+      if (!img) { img = document.createElement('img'); kutu.insertBefore(img, kutu.firstChild); }
+      img.src = dataUrl;
+      kutu.classList.add('dolu');
+      kutu.querySelector('.etiket').textContent = FOTO_AD[k] + ' ✓';
+      titret(15);
+    } catch (e) {
+      kutu.querySelector('.etiket').textContent = 'Olmadı, tekrar deneyin';
+    }
+    inp.value = '';
+  }
+  document.querySelectorAll('.foto[data-kutu]').forEach(fotoKutuHazirla);
+
+   
+  function veriTopla() {
+    const yuv = yuvarlakMi();
+    return {
+      acan: $('acan').value.trim(),
+      tedarikci: $('tedarikci').value === 'Diğer' ? $('tedarikciDiger').value.trim() : $('tedarikci').value,
+      seri: $('seri').value.trim(),
+      fatura: $('fatura').value.trim(), alis: $('alis').value.trim(), paraBirimi: $('paraBirimi').value,
+      satis: $('satis').value.trim(), satisParaBirimi: $('satisParaBirimi').value,
+      urunTipi: $('urunTipi').value, uretimYeri: $('uretimYeri').value,
+      desen: secili('desen')[0] === 'Diğer' ? $('desenDiger').value.trim() : (secili('desen')[0] || ''),
+      tarz: secili('tarz')[0] || '', anaRenk: secili('anaRenk')[0] || '', destekRenk: secili('destekRenk'),
+      iplik: secili('iplik'),
+      kokBoya: $('kokBoya').getAttribute('aria-pressed') === 'true' ? 'Var' : 'Yok',
+      temizlik: secili('temizlik')[0] || '', antika: $('antika').value.trim(),
+      en: yuv ? '' : $('en').value, boy: yuv ? '' : $('boy').value, cap: yuv ? $('cap').value : '',
+      adet: $('adet').value || 1, kondisyon: secili('kondisyon')[0] || '', not: $('not').value.trim(),
+      foto: foto
+    };
+  }
+  function dolu(ad, v) {
+    switch (ad) {
+      case 'iplik': return v[ad].length > 0;
+      case 'olcu': return v.cap ? sayi(v.cap) > 0 : (sayi(v.en) > 0 && sayi(v.boy) > 0);
+      case 'fotoOn': return !!v.foto.on;
+      default: return !!v[ad];
+    }
+  }
+  function hataGoster(metin) {
+    const h = $('hata'); h.textContent = metin; h.style.display = 'block';
+    h.classList.remove('sallan'); void h.offsetWidth; h.classList.add('sallan');
+    titret([40, 60, 40]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function adimKontrol(i) {
+    document.querySelectorAll('.eksik').forEach(x => x.classList.remove('eksik'));
+    $('hata').style.display = 'none';
+    const v = veriTopla();
+    const eksik = ADIM_ALANLARI[i].filter(ad => !dolu(ad, v));
+    if (eksik.length) {
+      eksik.forEach(ad => { const el = document.querySelector('[data-ad="' + ad + '"]'); if (el) el.classList.add('eksik'); });
+      hataGoster('Az kaldı! Eksik: ' + eksik.map(a => ETIKET[a]).join(', '));
+      return false;
+    }
+    return true;
+  }
+
+   
+  function adimGoster(i, geriMi) {
+    adim = i;
+    document.querySelectorAll('section[data-adim]').forEach(s => {
+      const aktif = Number(s.dataset.adim) === i;
+      s.classList.toggle('aktif', aktif);
+      s.classList.toggle('geri', aktif && !!geriMi);
+    });
+    $('dolgu').style.width = ((i + 1) / 4 * 100) + '%';
+    document.querySelectorAll('.adimlar span').forEach((s, j) => s.classList.toggle('aktif', j === i));
+    $('geri').classList.toggle('gizli', i === 0);
+    $('ileri').textContent = i === 3 ? 'Künyeyi gönder' : 'Devam';
+    window.scrollTo(0, 0);
+  }
+  $('geri').addEventListener('click', () => { $('hata').style.display = 'none'; adimGoster(adim - 1, true); });
+  $('ileri').addEventListener('click', () => {
+    if (!adimKontrol(adim)) return;
+    if (adim === 0) { try { localStorage.setItem('hz_kunye_acan', $('acan').value.trim()); } catch (e) {} }
+    if (adim < 3) { titret(10); adimGoster(adim + 1); return; }
+    gonder();
+  });
+
+  function gonder() {
+    const btn = $('ileri'); btn.disabled = true; btn.textContent = 'Gönderiliyor…'; $('geri').disabled = true;
+    const veri = veriTopla();
+    veri.istekId = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    sunucu({ islem: 'kaydet', veri: veri })
+      .then(r => {
+        btn.disabled = false; $('geri').disabled = false;
+        $('form').classList.add('gizli'); $('altCubuk').classList.add('gizli'); $('ilerleme').classList.add('gizli');
+        $('sonuc').style.display = 'block';
+        $('sonucNo').textContent = r.no;
+        $('sonucGun').textContent = r.bugun ? 'Bugünün ' + r.bugun + '. halısı' : '';
+        $('sonucMetin').textContent = r.mail
+          ? 'Tabloya yazıldı, muhasebeye mail gitti.'
+          : 'Tabloya yazıldı ama mail gönderilemedi. Lütfen Mehmethan Bey\'e haber verin. (' + r.mailDurumu + ')';
+        $('selam').textContent = 'Eline sağlık!';
+        window.scrollTo(0, 0);
+        titret([30, 40, 30, 40, 80]);
+        konfeti();
+      })
+      .catch(err => {
+        btn.disabled = false; $('geri').disabled = false; btn.textContent = 'Künyeyi gönder';
+        hataGoster((err && err.message ? err.message : String(err)) + ' — Bağlantınızı kontrol edip tekrar deneyin.');
+      });
+  }
+
+   
+  function konfeti() {
+    const c = $('konfeti'), ctx = c.getContext('2d');
+    c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    const renkler = ['#7a2e2a', '#c0603d', '#e8c33a', '#3f6fb5', '#4e8a4a', '#d9c7a7', '#2fb3b0'];
+    const p = Array.from({ length: 140 }, () => ({
+      x: innerWidth / 2, y: innerHeight * 0.35, vx: (Math.random() - .5) * 14, vy: Math.random() * -14 - 4,
+      r: Math.random() * 6 + 4, a: Math.random() * Math.PI, va: (Math.random() - .5) * .3, renk: renkler[Math.floor(Math.random() * renkler.length)]
+    }));
+    let t = 0;
+    (function kare() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      p.forEach(q => {
+        q.vy += .35; q.vx *= .99; q.x += q.vx; q.y += q.vy; q.a += q.va;
+        ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.a); ctx.fillStyle = q.renk;
+        ctx.fillRect(-q.r / 2, -q.r / 4, q.r, q.r / 2); ctx.restore();
+      });
+      if (++t < 150) requestAnimationFrame(kare); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+    })();
+  }
+
+   
+  $('yeni').addEventListener('click', () => {
+    const ad = $('acan').value, ted = $('tedarikci').value, tedD = $('tedarikciDiger').value, seri = $('seri').value, fat = $('fatura').value;
+    $('form').reset(); $('acan').value = ad; $('tedarikci').value = ted; $('tedarikciDiger').value = tedD;
+    $('seri').value = seri; $('fatura').value = fat; $('adet').value = 1;
+    document.querySelectorAll('.cip').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    $('sekil').querySelector('.cip').setAttribute('aria-pressed', 'true');
+    kokBoyaAyarla(false);
+    Object.keys(foto).forEach(k => delete foto[k]);
+    document.querySelectorAll('.foto[data-kutu]').forEach(fotoKutuHazirla);
+    olcuGuncelle(); iplikKontrol(); selamla(); digerGuncelle(); renkGuncelle();
+    $('sonuc').style.display = 'none';
+    $('form').classList.remove('gizli'); $('altCubuk').classList.remove('gizli'); $('ilerleme').classList.remove('gizli');
+    adimGoster(ad ? 1 : 0);
+  });
+
+  olcuGuncelle();
+  adimGoster(0);
+  sunucu({ islem: 'liste' }).then(r => {
+    $('seriListe').innerHTML = r.liste.seri.map(x => '<option value="' + x + '">').join('');
+  }).catch(() => {});
+</script>
+<script>
+  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+</script>
+</body>
+</html>
