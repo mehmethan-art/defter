@@ -1,6 +1,6 @@
 /* Halıcızade Defter: ekran dosyalarını saklar, internet yavaşken de açılsın diye.
    Kayıtlar (Google tarafı) hiç saklanmaz; her zaman canlı çekilir. */
-const SURUM = 'defter-v5';
+const SURUM = 'defter-v6';
 const DOSYALAR = ['./', 'index.html', 'servis.html', 'kunye.html', 'izin.html', 'satis.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'];
 
 self.addEventListener('install', e => {

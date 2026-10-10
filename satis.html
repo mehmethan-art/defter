@@ -53,6 +53,7 @@
   .baglanti{border:0;background:none;color:var(--soluk);text-decoration:underline;font-size:14px;cursor:pointer;padding:10px}
   /* Katmanlar */
   .katman{position:fixed;inset:0;background:var(--zemin);overflow-y:auto;z-index:10;-webkit-overflow-scrolling:touch}
+  #formKatman{z-index:12}
   .giris-kutu{max-width:420px;margin:12vh auto 0;padding:0 18px}
   .giris-kutu .marka{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--soluk)}
   .giris-kutu h1{margin:4px 0 6px;font-size:26px}
@@ -259,6 +260,7 @@
   const AYLAR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
   const SEKILLER = ['Nakit', 'Kredi kartı', 'Havale / EFT', 'iyzico link'];
   const TAKSITLI = ['Kredi kartı', 'iyzico link'];
+  const BANKALAR = ['Akbank', 'Garanti', 'İş Bankası', 'Halkbank', 'VakıfBank', 'QNB Finansbank', 'Ziraat'];
   const ONBELLEK = 'hz_satis_onbellek', TASLAK = 'hz_satis_taslak';
 
   function oku(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
@@ -478,7 +480,7 @@
     const oz = el('div', 'ozet');
     const sat = (a, b, cls) => { const r = el('div', cls); r.appendChild(el('span', null, a)); r.appendChild(el('span', null, b)); oz.appendChild(r); };
     sat('Toplam', tl(s.toplam), 'buyuk');
-    s.odemeler.forEach(o => sat(o.sekil + (TAKSITLI.indexOf(o.sekil) >= 0 ? (o.taksit > 1 ? ' · ' + o.taksit + ' taksit' : ' · tek çekim') : ''), tl(o.tutar)));
+    s.odemeler.forEach(o => sat(o.sekil + (o.banka ? ' · ' + o.banka : '') + (TAKSITLI.indexOf(o.sekil) >= 0 ? (o.taksit > 1 ? ' · ' + o.taksit + ' taksit' : ' · tek çekim') : ''), tl(o.tutar)));
     if (!s.odemeler.length) sat('Ödeme', 'girilmedi');
     if (s.kalan > 0.004) sat('Kalan', tl(s.kalan), 'eksi');
     d4.appendChild(oz);
@@ -534,7 +536,7 @@
   });
 
   function bosKalem() { return { barkod: '', stok: '', olcu: '', adet: '1', fiyat: '', siparis: false }; }
-  function bosOdeme(tutar) { return { sekil: '', tutar: tutar || '', taksit: '1' }; }
+  function bosOdeme(tutar) { return { sekil: '', tutar: tutar || '', taksit: '1', banka: '' }; }
 
   function girdi(deger, etiket, ozellik, degisti) {
     const d = el('div', 'alan');
@@ -605,6 +607,16 @@
         sec.appendChild(b);
       });
       kart.appendChild(sec);
+      if (x.sekil === 'Kredi kartı') {
+        const bl = el('label', 'bas', 'Banka'); kart.appendChild(bl);
+        const bs = el('div', 'alan cipler');
+        BANKALAR.forEach(bk => {
+          const b = el('button', 'kucuk-cip', bk); b.type = 'button'; b.setAttribute('aria-pressed', x.banka === bk ? 'true' : 'false');
+          b.addEventListener('click', () => { x.banka = bk; $('formHata').hidden = true; odemeCiz(); taslakSakla(); });
+          bs.appendChild(b);
+        });
+        kart.appendChild(bs);
+      }
       const yan = el('div', 'alan yan');
       yan.appendChild(paraAlani(x, 'tutar', 'Tutar (₺)'));
       if (TAKSITLI.indexOf(x.sekil) >= 0) {
@@ -666,7 +678,7 @@
     durum.kalemler = (s.kalemler && s.kalemler.length ? s.kalemler : [bosKalem()]).map(k => ({
       barkod: k.barkod || '', stok: k.stok || '', olcu: k.olcu || '', adet: String(k.adet || 1),
       fiyat: typeof k.fiyat === 'number' ? sayiYaz(k.fiyat) : (k.fiyat || ''), siparis: !!k.siparis }));
-    durum.odemeler = (s.odemeler || []).map(o => ({ sekil: o.sekil || '', tutar: typeof o.tutar === 'number' ? sayiYaz(o.tutar) : (o.tutar || ''), taksit: String(o.taksit || 1) }));
+    durum.odemeler = (s.odemeler || []).map(o => ({ sekil: o.sekil || '', tutar: typeof o.tutar === 'number' ? sayiYaz(o.tutar) : (o.tutar || ''), taksit: String(o.taksit || 1), banka: o.banka || '' }));
     if (!durum.odemeler.length && !s.no) durum.odemeler = [bosOdeme()];
     faturaCiz(); kalemCiz(); odemeCiz();
   }
@@ -677,7 +689,7 @@
     v.kimlikNo = (durum.faturaFarkli ? $('fVn').value : $('fTc').value).replace(/\D/g, '');
     v.kalemler = durum.kalemler.map(k => ({ barkod: k.barkod.trim(), stok: k.stok.trim(), olcu: k.olcu.trim(), adet: Math.round(Number(String(k.adet).replace(',', '.'))), fiyat: sayiOku(k.fiyat), siparis: k.siparis }))
       .filter(k => k.barkod || k.stok || k.olcu || k.fiyat > 0);
-    v.odemeler = durum.odemeler.map(o => ({ sekil: o.sekil, tutar: sayiOku(o.tutar), taksit: Number(o.taksit) || 1 }))
+    v.odemeler = durum.odemeler.map(o => ({ sekil: o.sekil, tutar: sayiOku(o.tutar), taksit: Number(o.taksit) || 1, banka: o.sekil === 'Kredi kartı' ? (o.banka || '') : '' }))
       .filter(o => o.sekil || o.tutar > 0);
     return v;
   }
@@ -755,6 +767,7 @@
       const o = v.odemeler[i];
       if (!o.sekil) return formHata((i + 1) + '. ödeme: ödeme şeklini seçin.');
       if (!(o.tutar > 0)) return formHata((i + 1) + '. ödeme: tutarı yazın.');
+      if (o.sekil === 'Kredi kartı' && !o.banka) return formHata((i + 1) + '. ödeme: bankayı seçin.');
     }
     if (v.kimlikNo && v.kimlikNo.length !== 10 && v.kimlikNo.length !== 11) return formHata('Kimlik No 11 hane (T.C.), Vergi No 10 hane olmalı.');
     const t = hesap();
