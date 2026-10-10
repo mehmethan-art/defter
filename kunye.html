@@ -177,8 +177,8 @@
       <input type="text" id="desenDiger" class="ek-girdi gizli" autocapitalize="words" placeholder="Desenin adı">
     </div>
     <div class="alan" data-ad="tarz">
-      <label class="bas">Tarz</label>
-      <div class="cipler" id="tarz" data-tek></div>
+      <label class="bas">Tarz <small>(birden fazla seçilebilir)</small></label>
+      <div class="cipler" id="tarz"></div>
     </div>
     <div class="alan" data-ad="anaRenk">
       <label class="bas">Ana renk <small>(bir tane)</small></label>
@@ -472,7 +472,7 @@
       satis: $('satis').value.trim(), satisParaBirimi: $('satisParaBirimi').value,
       urunTipi: $('urunTipi').value, uretimYeri: $('uretimYeri').value,
       desen: secili('desen')[0] === 'Diğer' ? $('desenDiger').value.trim() : (secili('desen')[0] || ''),
-      tarz: secili('tarz')[0] || '', anaRenk: secili('anaRenk')[0] || '', destekRenk: secili('destekRenk'),
+      tarz: secili('tarz').join(', '), anaRenk: secili('anaRenk')[0] || '', destekRenk: secili('destekRenk'),
       iplik: secili('iplik'),
       kokBoya: $('kokBoya').getAttribute('aria-pressed') === 'true' ? 'Var' : 'Yok',
       temizlik: secili('temizlik')[0] || '', antika: $('antika').value.trim(),
