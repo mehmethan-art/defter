@@ -190,7 +190,7 @@
       <h3>Teslimat adresi</h3>
       <div class="alan"><label class="bas" for="fMusteri">İsim soyisim</label><input type="text" id="fMusteri" autocomplete="off" autocapitalize="words"></div>
       <div class="alan"><label class="bas" for="fTelefon">Telefon</label><input type="tel" id="fTelefon" autocomplete="off" inputmode="tel"></div>
-      <div class="alan"><label class="bas" for="fEposta">E-posta <small>(isteğe bağlı)</small></label><input type="email" id="fEposta" autocomplete="off" autocapitalize="off"></div>
+      <div class="alan"><label class="bas" for="fEposta">E-posta <small>(isteğe bağlı)</small></label><input type="text" inputmode="email" id="fEposta" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="bilgi eposta-ipucu" id="fEpostaIpucu" hidden></div></div>
       <div class="alan"><label class="bas" for="fMahalle">Mahalle</label><input type="text" id="fMahalle" autocomplete="off"></div>
       <div class="alan"><label class="bas" for="fCadde">Cadde, Sokak</label><input type="text" id="fCadde" autocomplete="off"></div>
       <div class="alan"><label class="bas" for="fKapi">Site / Apartman, Kapı No</label><input type="text" id="fKapi" autocomplete="off"></div>
@@ -211,7 +211,7 @@
       </div>
       <div id="faturaFarkli" hidden>
         <div class="alan"><label class="bas" for="fUnvan">Ünvan</label><input type="text" id="fUnvan" autocomplete="off"></div>
-        <div class="alan"><label class="bas" for="fFEposta">E-posta <small>(isteğe bağlı)</small></label><input type="email" id="fFEposta" autocomplete="off" autocapitalize="off"></div>
+        <div class="alan"><label class="bas" for="fFEposta">E-posta <small>(isteğe bağlı)</small></label><input type="text" inputmode="email" id="fFEposta" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="bilgi eposta-ipucu" id="fFEpostaIpucu" hidden></div></div>
         <div class="alan"><label class="bas" for="fVd">Vergi Dairesi</label><input type="text" id="fVd" autocomplete="off"></div>
         <div class="alan"><label class="bas" for="fVn">Kimlik No / Vergi No</label><input type="text" id="fVn" inputmode="numeric" autocomplete="off" maxlength="11"></div>
         <div class="alan"><button class="kucuk-cip" type="button" id="adresKopyala">Teslimat adresini buraya kopyala</button></div>
@@ -423,6 +423,67 @@
   function detayAc(s) { durum.acik = s; detayCiz(s); $('detayKatman').hidden = false; $('detayKatman').scrollTop = 0; }
   $('detayKapat').addEventListener('click', () => { $('detayKatman').hidden = true; durum.acik = null; });
 
+  /* E-posta: "email" tipli kutu, Türkçe harfli alan adını (ıcloud) gizlice "xn--…" koduna çeviriyordu.
+     Artık düz metin kutusu; kayıtta ı/İ → i, küçük harf, boşluksuz. Eski xn-- kayıtlar okunurken çözülür. */
+  function punyCoz(etiket) {
+    if (!/^xn--/i.test(etiket)) return etiket;
+    try {
+      const g = etiket.slice(4).toLowerCase(), cikti = [], b = 36, tmin = 1, tmax = 26;
+      let n = 128, i = 0, bias = 72, son = g.lastIndexOf('-');
+      if (son > 0) for (let j = 0; j < son; j++) cikti.push(g.charCodeAt(j));
+      for (let p = son > 0 ? son + 1 : 0; p < g.length;) {
+        const eskiI = i;
+        for (let w = 1, k = b; ; k += b) {
+          const c = g.charCodeAt(p++); const d = c - 48 < 10 ? c - 22 : c - 97 < 26 ? c - 97 : b;
+          if (d >= b) throw 0;
+          i += d * w; const t = k <= bias ? tmin : k >= bias + tmax ? tmax : k - bias;
+          if (d < t) break; w *= b - t;
+        }
+        const adet = cikti.length + 1; let delta = i - eskiI; delta = eskiI === 0 ? Math.floor(delta / 700) : delta >> 1;
+        delta += Math.floor(delta / adet); let k2 = 0;
+        for (; delta > 455; k2 += b) delta = Math.floor(delta / 35);
+        bias = Math.floor(k2 + 36 * delta / (delta + 38));
+        n += Math.floor(i / adet); i %= adet; cikti.splice(i++, 0, n);
+      }
+      return String.fromCodePoint.apply(null, cikti);
+    } catch (e) { return etiket; }
+  }
+  function epostaDuzelt(v) {
+    v = String(v || '').replace(/\s+/g, '');
+    if (!v) return '';
+    const at = v.lastIndexOf('@');
+    if (at > 0) v = v.slice(0, at + 1) + v.slice(at + 1).split('.').map(punyCoz).join('.');
+    return v.replace(/[ıİ]/g, 'i').toLowerCase();
+  }
+  const BILINEN = ['gmail.com', 'hotmail.com', 'icloud.com', 'outlook.com', 'yahoo.com', 'yandex.com', 'windowslive.com', 'live.com', 'msn.com', 'me.com', 'hotmail.com.tr', 'outlook.com.tr', 'yahoo.com.tr'];
+  function mesafe(a, b) {
+    const d = []; for (let i = 0; i <= a.length; i++) { d[i] = [i]; }
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+  function epostaOneri(v) {
+    const at = v.lastIndexOf('@'); if (at < 1) return '';
+    const alan = v.slice(at + 1); if (!alan || BILINEN.indexOf(alan) >= 0) return '';
+    let en = '', enD = 3;
+    BILINEN.forEach(b => { const m = mesafe(alan, b); if (m < enD) { enD = m; en = b; } });
+    return en ? v.slice(0, at + 1) + en : '';
+  }
+  function epostaKutusu(id) {
+    const kutu = $(id), ip = $(id + 'Ipucu');
+    const bak = () => {
+      const o = epostaOneri(epostaDuzelt(kutu.value));
+      ip.textContent = ''; ip.hidden = !o; if (!o) return;
+      ip.appendChild(document.createTextNode('Bunu mu demek istediniz: '));
+      const b = el('button', 'kucuk-cip', o); b.type = 'button';
+      b.addEventListener('click', () => { kutu.value = o; ip.hidden = true; taslakSakla(); });
+      ip.appendChild(b);
+    };
+    kutu.addEventListener('blur', () => { kutu.value = epostaDuzelt(kutu.value); bak(); taslakSakla(); });
+    kutu.addEventListener('input', () => { ip.hidden = true; });
+    return bak;
+  }
   function el(tag, cls, metin) { const e = document.createElement(tag); if (cls) e.className = cls; if (metin != null) e.textContent = metin; return e; }
   function kopyala(m) {
     if (!m) return;
@@ -459,12 +520,12 @@
     g.appendChild(d1);
 
     const d2 = el('div', 'blok'); d2.appendChild(el('h3', null, 'Teslimat'));
-    tanim(d2, [['İsim soyisim', s.musteri], ['Telefon', s.telefon], ['E-posta', s.eposta], ['Adres', adres(s.mahalle, s.cadde, s.kapi, s.semt, s.sehir)]]);
+    tanim(d2, [['İsim soyisim', s.musteri], ['Telefon', s.telefon], ['E-posta', epostaDuzelt(s.eposta)], ['Adres', adres(s.mahalle, s.cadde, s.kapi, s.semt, s.sehir)]]);
     g.appendChild(d2);
 
     const d3 = el('div', 'blok'); d3.appendChild(el('h3', null, s.faturaFarkli ? 'Fatura (farklı)' : 'Fatura (teslimatla aynı)'));
     tanim(d3, s.faturaFarkli
-      ? [['Ünvan', s.fUnvan], ['E-posta', s.fEposta], ['Vergi dairesi', s.vergiDairesi], ['Kimlik / Vergi No', s.kimlikNo], ['Adres', adres(s.fMahalle, s.fCadde, s.fKapi, s.fSemt, s.fSehir)]]
+      ? [['Ünvan', s.fUnvan], ['E-posta', epostaDuzelt(s.fEposta)], ['Vergi dairesi', s.vergiDairesi], ['Kimlik / Vergi No', s.kimlikNo], ['Adres', adres(s.fMahalle, s.fCadde, s.fKapi, s.fSemt, s.fSehir)]]
       : [['Ad soyad', s.musteri], ['T.C. Kimlik No', s.kimlikNo || '—']]);
     g.appendChild(d3);
 
@@ -522,6 +583,8 @@
   /* ---- Form ---- */
   const ALANLAR = { musteri: 'fMusteri', telefon: 'fTelefon', eposta: 'fEposta', mahalle: 'fMahalle', cadde: 'fCadde', kapi: 'fKapi', semt: 'fSemt', sehir: 'fSehir',
     fUnvan: 'fUnvan', fEposta: 'fFEposta', vergiDairesi: 'fVd', fMahalle: 'fFMahalle', fCadde: 'fFCadde', fKapi: 'fFKapi', fSemt: 'fFSemt', fSehir: 'fFSehir', not: 'fNot' };
+
+  const epostaBak1 = epostaKutusu('fEposta'), epostaBak2 = epostaKutusu('fFEposta');
 
   function faturaCiz() {
     $('fAyni').setAttribute('aria-pressed', durum.faturaFarkli ? 'false' : 'true');
@@ -671,6 +734,8 @@
     $('fTarih').value = s.tarih || ymd(new Date());
     temsilciCiz(s.temsilci || durum.kim);
     Object.keys(ALANLAR).forEach(k => { $(ALANLAR[k]).value = s[k] || ''; });
+    $('fEposta').value = epostaDuzelt(s.eposta); $('fFEposta').value = epostaDuzelt(s.fEposta);
+    epostaBak1(); epostaBak2();
     if (!s.no && !s.sehir) $('fSehir').value = s.sehir == null ? 'Ankara' : '';
     durum.faturaFarkli = !!s.faturaFarkli;
     $('fTc').value = s.faturaFarkli ? '' : (s.kimlikNo || '');
@@ -686,6 +751,7 @@
   function formOku() {
     const v = { no: durum.duzenlenen ? durum.duzenlenen.no : '', tarih: $('fTarih').value, temsilci: $('fTemsilci').value, faturaFarkli: durum.faturaFarkli, kim: durum.kim || $('fTemsilci').value };
     Object.keys(ALANLAR).forEach(k => { v[k] = $(ALANLAR[k]).value.trim(); });
+    v.eposta = epostaDuzelt(v.eposta); v.fEposta = epostaDuzelt(v.fEposta);
     v.kimlikNo = (durum.faturaFarkli ? $('fVn').value : $('fTc').value).replace(/\D/g, '');
     v.kalemler = durum.kalemler.map(k => ({ barkod: k.barkod.trim(), stok: k.stok.trim(), olcu: k.olcu.trim(), adet: Math.round(Number(String(k.adet).replace(',', '.'))), fiyat: sayiOku(k.fiyat), siparis: k.siparis }))
       .filter(k => k.barkod || k.stok || k.olcu || k.fiyat > 0);
