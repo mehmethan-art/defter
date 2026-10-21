@@ -166,6 +166,36 @@
   .tost.hata{background:var(--hata)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   .geri-menu{text-decoration:none;color:var(--vurgu)!important;font-weight:700;letter-spacing:.12em}
+
+  /* Halı etiketleri */
+  .etiketler{display:flex;flex-direction:column;gap:10px}
+  .etiket-satir{display:grid;grid-template-columns:76px 1fr auto;gap:12px;align-items:center;border:1px solid var(--cizgi);border-radius:14px;padding:8px;background:#fff}
+  .etiket-satir.hatali{border-color:#e9b9b4;background:#fdf6f5}
+  .etiket-foto{width:76px;height:76px;border-radius:10px;border:0;padding:0;background:#f1ede7 center/cover no-repeat;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--soluk);text-align:center;line-height:1.2;position:relative;overflow:hidden}
+  .etiket-foto.yukleniyor::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.55)}
+  .etiket-foto .dur{position:relative;z-index:1;font-weight:600;color:var(--yazi);padding:0 4px}
+  .etiket-orta{min-width:0}
+  .etiket-orta .ust-yazi{font-size:13px;color:var(--soluk);margin-bottom:6px}
+  .etiket-orta .ust-yazi.hata{color:var(--hata)}
+  .adet{display:inline-flex;align-items:center;border:1px solid var(--cizgi);border-radius:12px;overflow:hidden;background:#fff}
+  .adet button{width:44px;height:44px;border:0;background:#f6f2ec;font-size:20px;line-height:1;cursor:pointer}
+  .adet button:disabled{opacity:.4}
+  .adet input{width:52px;height:44px;border:0;text-align:center;font:inherit;font-weight:700;font-variant-numeric:tabular-nums;
+    -moz-appearance:textfield;appearance:textfield;padding:0;background:#fff;color:var(--yazi)}
+  .adet input::-webkit-outer-spin-button,.adet input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .adet input:focus{outline:2px solid var(--vurgu);outline-offset:-2px}
+  .etiket-sil{border:1px solid var(--cizgi);background:#fff;border-radius:12px;width:44px;height:44px;font-size:20px;color:var(--soluk);cursor:pointer}
+  .etiket-tekrar{border:0;background:none;color:var(--vurgu);font-weight:600;padding:0;margin-left:6px;cursor:pointer;font-size:13px}
+  .etiket-ekle{width:100%;border:1px dashed var(--soluk);border-radius:14px;background:none;padding:14px;font-weight:600;cursor:pointer;color:var(--yazi);margin-top:10px}
+  .etiket-toplam{font-size:14px;color:var(--soluk);margin-top:8px}
+  .kart .etiket-ozet{font-size:14px;margin-top:4px;color:var(--yazi)}
+  .buyuk{position:fixed;inset:0;background:rgba(20,17,15,.94);z-index:40;display:flex;flex-direction:column}
+  .buyuk .ust2{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;color:#fff}
+  .buyuk .ust2 button{border:1px solid rgba(255,255,255,.4);background:none;color:#fff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
+  .buyuk .resim{flex:1;display:flex;align-items:center;justify-content:center;padding:0 10px calc(14px + env(safe-area-inset-bottom,0px));min-height:0}
+  .buyuk img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+  .buyuk .resim span{color:#ddd}
 </style>
 </head>
 <body>
@@ -295,7 +325,14 @@
         </div>
       </div>
       <div class="alan">
-        <label class="bas" for="fHalilar">Götürülecek halılar <small>(isteğe bağlı)</small></label>
+        <label class="bas" id="etiketBaslik">Servise giden halılar <small>(her halı için bir etiket fotoğrafı ve adet)</small></label>
+        <div class="etiketler" id="etiketler" aria-labelledby="etiketBaslik"></div>
+        <button type="button" class="etiket-ekle" id="etiketEkle">📷 Halı ekle</button>
+        <input type="file" id="etiketDosya" accept="image/*" hidden>
+        <div class="etiket-toplam" id="etiketToplam" hidden></div>
+      </div>
+      <div class="alan">
+        <label class="bas" for="fHalilar">Halılar için not <small>(isteğe bağlı)</small></label>
         <textarea id="fHalilar" placeholder="Stok kodları ya da kısa tarif: Zima 200×290, Gessi 160×230…"></textarea>
       </div>
       <div class="alan">
@@ -312,6 +349,11 @@
     </div>
   </div>
   <div class="alt-cubuk"><div class="kap"><button class="ana-dugme" id="kaydetDugme" type="button">Kaydet</button></div></div>
+</div>
+
+<div class="buyuk" id="buyuk" hidden role="dialog" aria-modal="true" aria-label="Etiket fotoğrafı">
+  <div class="ust2"><span id="buyukYazi"></span><button type="button" id="buyukKapat">Kapat</button></div>
+  <div class="resim" id="buyukResim"></div>
 </div>
 
 <div class="tost" id="tost" role="status" aria-live="polite"></div>
@@ -551,6 +593,11 @@
       c.querySelector('.musteri').appendChild(r);
     }
     c.querySelector('.adres').textContent = (k.semt ? k.semt + ' · ' : '') + k.adres;
+    if ((k.etiketler || []).length) {
+      const o = document.createElement('div'); o.className = 'etiket-ozet';
+      o.textContent = '📷 ' + etiketOzet(k.etiketler);
+      c.querySelector('.adres').after(o);
+    }
     if (k.halilar) { const h = c.querySelector('.halilar'); h.hidden = false; h.textContent = 'Halılar: ' + k.halilar; }
     const alt = c.querySelector('.alt');
     k.personel.forEach(p => { const r = document.createElement('span'); r.className = 'rozet kisi'; r.textContent = p; alt.appendChild(r); });
@@ -646,6 +693,8 @@
     seciliAcan = (k && k.acan) || durum.kim;
     seciliSebep = k && k.sebep ? k.sebep.slice() : [];
     seciliDurum = k ? k.durum : 'Planlandı';
+    etiketSatirlari = (k && k.etiketler ? k.etiketler : []).map(e => ({ anahtar: ++etiketSayac, f: e.f, a: e.a, durum: 'tamam' }));
+    etiketCiz();
     $('durumBlok').hidden = !k;
     durumCiz();
     const bg = $('baglantilar'); bg.textContent = '';
@@ -688,9 +737,124 @@
       musteri: $('fMusteri').value.trim(), telefon: $('fTelefon').value.trim(),
       adres: $('fAdres').value.trim(), semt: $('fSemt').value.trim(),
       personel: seciliPersonel.slice(), halilar: $('fHalilar').value.trim(), not: $('fNot').value.trim(),
-      durum: seciliDurum, kim: durum.kim, acan: seciliAcan || durum.kim, sebep: seciliSebep.slice()
+      durum: seciliDurum, kim: durum.kim, acan: seciliAcan || durum.kim, sebep: seciliSebep.slice(),
+      etiketler: etiketSatirlari.filter(e => e.f).map(e => ({ f: e.f, a: e.a }))
     };
   }
+
+  /* ---------- Halı etiketleri: her satır = bir etiket fotoğrafı + o halıdan kaç adet gittiği ---------- */
+  let etiketSatirlari = [], etiketSayac = 0;
+  const fotoBellek = {};                        // Drive kimliği → görüntü (yalnız bu oturumda)
+  function etiketOzet(liste) {
+    const adet = liste.reduce((t, e) => t + (Number(e.a) || 0), 0);
+    return liste.length + ' çeşit halı · toplam ' + adet + ' adet';
+  }
+  function etiketToplamCiz() {
+    const t = $('etiketToplam'), hazir = etiketSatirlari.filter(e => e.f);
+    t.hidden = !hazir.length;
+    t.textContent = hazir.length ? 'Toplam: ' + etiketOzet(hazir) : '';
+  }
+  function fotoGetir(id) {
+    if (fotoBellek[id]) return Promise.resolve(fotoBellek[id]);
+    return sor({ islem: 'etiketFoto', id: id }).then(r => (fotoBellek[id] = r.veri));
+  }
+  function etiketCiz() {
+    const kutu = $('etiketler'); kutu.textContent = '';
+    etiketSatirlari.forEach((e, i) => {
+      const s = document.createElement('div');
+      s.className = 'etiket-satir' + (e.durum === 'hata' ? ' hatali' : '');
+      s.innerHTML = '<button type="button" class="etiket-foto"></button>' +
+        '<div class="etiket-orta"><div class="ust-yazi"></div><div class="adet">' +
+        '<button type="button" class="eksi" aria-label="Adedi azalt">−</button>' +
+        '<input type="number" inputmode="numeric" min="1" max="999" step="1">' +
+        '<button type="button" class="arti" aria-label="Adedi artır">+</button></div></div>' +
+        '<button type="button" class="etiket-sil" aria-label="Bu halıyı listeden çıkar">×</button>';
+      const foto = s.querySelector('.etiket-foto');
+      foto.setAttribute('aria-label', (i + 1) + '. halının etiketini büyüt');
+      const resim = e.yerel || fotoBellek[e.f];
+      if (resim) foto.style.backgroundImage = 'url("' + resim + '")';
+      else if (e.f) {
+        foto.innerHTML = '<span class="dur">Yükleniyor…</span>';
+        fotoGetir(e.f).then(v => { foto.textContent = ''; foto.style.backgroundImage = 'url("' + v + '")'; })
+          .catch(() => { foto.innerHTML = '<span class="dur">Görüntü açılmadı</span>'; });
+      }
+      if (e.durum === 'yukleniyor') { foto.classList.add('yukleniyor'); foto.innerHTML = '<span class="dur">Yükleniyor…</span>'; }
+      foto.addEventListener('click', () => buyukAc(e, i));
+
+      const ust = s.querySelector('.ust-yazi');
+      if (e.durum === 'hata') {
+        ust.classList.add('hata'); ust.textContent = 'Fotoğraf gönderilemedi.';
+        const t = document.createElement('button'); t.type = 'button'; t.className = 'etiket-tekrar'; t.textContent = 'Tekrar dene';
+        t.addEventListener('click', () => etiketGonder(e)); ust.appendChild(t);
+      } else ust.textContent = (i + 1) + '. halı · adet';
+
+      const inp = s.querySelector('input'), eksi = s.querySelector('.eksi');
+      inp.value = e.a; inp.setAttribute('aria-label', (i + 1) + '. halının adedi');
+      eksi.disabled = e.a <= 1;
+      const ayarla = n => { e.a = Math.min(999, Math.max(1, Math.floor(n) || 1)); inp.value = e.a; eksi.disabled = e.a <= 1; etiketToplamCiz(); };
+      eksi.addEventListener('click', () => ayarla(e.a - 1));
+      s.querySelector('.arti').addEventListener('click', () => ayarla(e.a + 1));
+      inp.addEventListener('change', () => ayarla(Number(inp.value)));
+      inp.addEventListener('blur', () => ayarla(Number(inp.value)));
+
+      s.querySelector('.etiket-sil').addEventListener('click', () => {
+        etiketSatirlari = etiketSatirlari.filter(x => x !== e); etiketCiz();
+      });
+      kutu.appendChild(s);
+    });
+    $('etiketEkle').textContent = etiketSatirlari.length ? '📷 Bir halı daha ekle' : '📷 Halı ekle';
+    etiketToplamCiz();
+  }
+
+  /* Telefon fotoğrafı büyüktür: uzun kenar 1600 piksele indirilir (etiket yazısı okunur kalır), JPEG olarak gönderilir */
+  function fotoKucult(dosya) {
+    return new Promise((coz, red) => {
+      const url = URL.createObjectURL(dosya), img = new Image();
+      img.onload = () => {
+        const olcek = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * olcek); c.height = Math.round(img.naturalHeight * olcek);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        coz(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); red(new Error('Bu fotoğraf açılamadı. Kamerayla yeniden çekip deneyin.')); };
+      img.src = url;
+    });
+  }
+  function etiketGonder(e) {
+    e.durum = 'yukleniyor'; etiketCiz();
+    return sor({ islem: 'etiketYukle', veri: e.yerel, istekId: e.istekId })
+      .then(r => { e.f = r.id; e.durum = 'tamam'; fotoBellek[r.id] = e.yerel; })
+      .catch(err => { e.durum = 'hata'; tost(err.message, true); })
+      .finally(() => { if (etiketSatirlari.indexOf(e) >= 0 && !$('formKatman').hidden) etiketCiz(); });
+  }
+  $('etiketEkle').addEventListener('click', () => {
+    if (etiketSatirlari.length >= 30) { tost('Bir serviste en çok 30 halı satırı olabilir.', true); return; }
+    $('etiketDosya').value = ''; $('etiketDosya').click();
+  });
+  $('etiketDosya').addEventListener('change', () => {
+    const dosya = $('etiketDosya').files[0]; if (!dosya) return;
+    fotoKucult(dosya).then(veri => {
+      const e = { anahtar: ++etiketSayac, f: '', a: 1, yerel: veri, durum: 'yukleniyor',
+        istekId: Date.now().toString(36) + Math.random().toString(36).slice(2) };
+      etiketSatirlari.push(e); etiketCiz(); etiketGonder(e);
+      cakismaTemizle();
+    }).catch(err => tost(err.message, true));
+  });
+
+  function buyukAc(e, i) {
+    const r = $('buyukResim'); r.textContent = '';
+    $('buyukYazi').textContent = (i + 1) + '. halı · ' + e.a + ' adet';
+    const goster = v => { r.textContent = ''; const img = document.createElement('img'); img.src = v; img.alt = (i + 1) + '. halının etiketi'; r.appendChild(img); };
+    const v = e.yerel || fotoBellek[e.f];
+    if (v) goster(v);
+    else if (e.f) { r.innerHTML = '<span>Yükleniyor…</span>'; fotoGetir(e.f).then(goster).catch(() => { r.innerHTML = '<span>Görüntü açılmadı</span>'; }); }
+    $('buyuk').hidden = false;
+  }
+  $('buyukKapat').addEventListener('click', () => { $('buyuk').hidden = true; });
+  $('buyuk').addEventListener('click', ev => { if (ev.target.id === 'buyuk' || ev.target.id === 'buyukResim') $('buyuk').hidden = true; });
 
   function eksikler(v) {
     const e = [];
@@ -720,6 +884,11 @@
     const e = eksikler(v);
     if (e.length) { $('formHata').hidden = false; $('formHata').textContent = 'Eksik: ' + e.join(', ') + '.'; $('formKatman').scrollTop = 0; return; }
     if (v.bit <= v.bas) { $('formHata').hidden = false; $('formHata').textContent = 'Bitiş saati başlangıçtan sonra olmalı.'; return; }
+    if (etiketSatirlari.some(e => e.durum === 'yukleniyor')) { tost('Etiket fotoğrafları gönderiliyor, birkaç saniye sonra tekrar basın.', true); return; }
+    if (etiketSatirlari.some(e => e.durum === 'hata')) {
+      $('formHata').hidden = false; $('formHata').textContent = 'Gönderilemeyen etiket fotoğrafı var: “Tekrar dene”ye basın ya da o satırı silin.';
+      $('formKatman').scrollTop = 0; return;
+    }
     const izinli = v.personel.filter(p => izinliMi(p, v.tarih));
     if (izinli.length && !durum.onayBekliyor) {
       durum.onayBekliyor = true;
