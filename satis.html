@@ -544,6 +544,7 @@
     s.odemeler.forEach(o => sat(o.sekil + (o.banka ? ' · ' + o.banka : '') + (TAKSITLI.indexOf(o.sekil) >= 0 ? (o.taksit > 1 ? ' · ' + o.taksit + ' taksit' : ' · tek çekim') : ''), tl(o.tutar)));
     if (!s.odemeler.length) sat('Ödeme', 'girilmedi');
     if (s.kalan > 0.004) sat('Kalan', tl(s.kalan), 'eksi');
+    if (s.odenen - s.toplam > 0.004) sat('Vade farkı / fazla tahsilat', tl(s.odenen - s.toplam));
     d4.appendChild(oz);
     g.appendChild(d4);
 
@@ -718,7 +719,7 @@
     const sat = (a, b, cls) => { const r = el('div', cls); r.appendChild(el('span', null, a)); r.appendChild(el('span', null, b)); o.appendChild(r); };
     sat('Toplam', tl(t.toplam), 'buyuk');
     sat('Ödenen', tl(t.odenen));
-    if (t.kalan < -0.004) sat('Fazla ödeme', tl(-t.kalan), 'eksi');
+    if (t.kalan < -0.004) sat('Vade farkı / fazla tahsilat', tl(-t.kalan));
     else sat('Kalan', tl(t.kalan), t.kalan > 0.004 ? 'eksi' : '');
     $('kaydetDugme').textContent = t.toplam > 0 ? 'Kaydet · ' + tl(t.toplam) : 'Kaydet';
   }
@@ -836,8 +837,7 @@
       if (o.sekil === 'Kredi kartı' && !o.banka) return formHata((i + 1) + '. ödeme: bankayı seçin.');
     }
     if (v.kimlikNo && v.kimlikNo.length !== 10 && v.kimlikNo.length !== 11) return formHata('Kimlik No 11 hane (T.C.), Vergi No 10 hane olmalı.');
-    const t = hesap();
-    if (t.kalan < -0.004) return formHata('Ödenen tutar toplamdan ' + tl(-t.kalan) + ' fazla.');
+    const t = hesap();   // Vade farkıyla tahsilat toplamı aşabilir; kayda izin verilir
 
     const btn = $('kaydetDugme'); btn.disabled = true; btn.textContent = 'Kaydediliyor…';
     sor({ islem: 'satisKaydet', veri: v, mkod: durum.mkod || undefined, istekId: Date.now().toString(36) + Math.random().toString(36).slice(2) })
