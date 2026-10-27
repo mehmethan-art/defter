@@ -104,11 +104,39 @@
   #konfeti{position:fixed;inset:0;pointer-events:none;z-index:4}
   .gizli{display:none !important}
   .geri-menu{text-decoration:none;color:var(--vurgu)!important;font-weight:700;letter-spacing:.12em}
+
+  /* Geçmiş künyeler */
+  .ust-satir{display:flex;align-items:center;gap:10px}
+  .gecmis-dugme{margin-left:auto;border:1px solid var(--cizgi);background:#fff;border-radius:999px;padding:8px 13px;font:inherit;font-size:14px;color:var(--yazi);cursor:pointer}
+  .katman{position:fixed;inset:0;background:var(--zemin);z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .katman .ust{position:sticky;top:0;z-index:2;background:rgba(246,242,236,.97);border-bottom:1px solid var(--cizgi)}
+  .katman .ust .ic{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 16px}
+  .katman .ust h2{margin:0;font-size:19px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kapat{border:1px solid var(--cizgi);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--yazi)}
+  .katman .govde{max-width:640px;margin:0 auto;padding:12px 12px 40px}
+  .katman input[type=search],.katman input[type=password]{width:100%;font:inherit;padding:13px 12px;border:1px solid var(--cizgi);border-radius:12px;background:#fff;color:var(--yazi);-webkit-appearance:none;appearance:none}
+  .k-liste{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .k-kart{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--cizgi);border-radius:14px;padding:12px 14px;font:inherit;color:var(--yazi);cursor:pointer}
+  .k-kart:focus-visible{outline:2px solid var(--vurgu);outline-offset:2px}
+  .k-kart .bas2{display:flex;align-items:baseline;gap:8px}
+  .k-kart .bas2 b{font-size:16px}
+  .k-kart .bas2 span{margin-left:auto;font-size:13px;color:var(--soluk);white-space:nowrap}
+  .k-kart .ozet{font-size:14px;color:var(--soluk);margin-top:3px;overflow-wrap:anywhere}
+  .k-bos{background:#fff;border:1px dashed var(--cizgi);border-radius:14px;padding:22px;text-align:center;color:var(--soluk)}
+  .k-foto{width:100%;aspect-ratio:4/3;border-radius:14px;background:#efe9e1 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:var(--soluk);font-size:14px;margin-bottom:12px}
+  .k-tablo{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--cizgi);border-radius:14px;overflow:hidden;font-size:15px}
+  .k-tablo th{text-align:left;font-weight:400;color:var(--soluk);padding:9px 12px;border-bottom:1px solid var(--cizgi);width:42%;vertical-align:top}
+  .k-tablo td{padding:9px 12px;border-bottom:1px solid var(--cizgi);font-weight:600;overflow-wrap:anywhere}
+  .k-tablo tr:last-child th,.k-tablo tr:last-child td{border-bottom:0}
+  .k-hata{background:#fdecea;color:var(--hata);border-radius:12px;padding:12px;margin-top:12px}
 </style>
 </head>
 <body>
 <header>
-  <a class="marka geri-menu" href="./">‹ Menü</a>
+  <div class="ust-satir">
+    <a class="marka geri-menu" href="./">‹ Menü</a>
+    <button type="button" class="gecmis-dugme" id="gecmisAc">📋 Geçmiş künyeler</button>
+  </div>
   <h1 id="selam">Yeni bir halı geldi!</h1>
 </header>
 
@@ -175,6 +203,10 @@
       <label class="bas">Desen</label>
       <div class="cipler" id="desen" data-tek></div>
       <input type="text" id="desenDiger" class="ek-girdi gizli" autocapitalize="words" placeholder="Desenin adı">
+    </div>
+    <div class="alan">
+      <label class="bas" for="desenKodu">Desen kodu <small>(isteğe bağlı)</small></label>
+      <input type="text" id="desenKodu" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Etiketteki desen / model kodu">
     </div>
     <div class="alan" data-ad="tarz">
       <label class="bas">Tarz <small>(birden fazla seçilebilir)</small></label>
@@ -259,6 +291,27 @@
   </div>
 </div>
 
+<div class="katman gizli" id="gecmis" role="dialog" aria-modal="true" aria-labelledby="gecmisBaslik">
+  <div class="ust"><div class="ic"><h2 id="gecmisBaslik">Geçmiş künyeler</h2><button type="button" class="kapat" id="gecmisKapat">Kapat</button></div></div>
+  <div class="govde">
+    <div id="gecmisGiris" class="gizli">
+      <p style="margin:4px 0 12px;color:var(--soluk)">Mağaza kodunu girin. Bu telefonda bir kez sorulur.</p>
+      <input type="password" id="gecmisKod" inputmode="numeric" autocomplete="off" placeholder="Mağaza kodu" aria-label="Mağaza kodu">
+      <button type="button" id="gecmisKodDugme" style="width:100%;margin-top:10px;padding:15px;border:0;border-radius:14px;background:var(--vurgu);color:#fff;font:inherit;font-weight:700;cursor:pointer">Künyeleri aç</button>
+    </div>
+    <div id="gecmisIcerik" class="gizli">
+      <input type="search" id="gecmisAra" placeholder="Künye no, seri, tedarikçi, desen kodu…" aria-label="Künyelerde ara">
+      <div class="k-liste" id="gecmisListe"></div>
+    </div>
+    <div class="k-hata gizli" id="gecmisHata"></div>
+  </div>
+</div>
+
+<div class="katman gizli" id="kunyeDetay" role="dialog" aria-modal="true" aria-labelledby="detayBaslik">
+  <div class="ust"><div class="ic"><h2 id="detayBaslik"></h2><button type="button" class="kapat" id="detayKapat">Geri</button></div></div>
+  <div class="govde"><div class="k-foto" id="detayFoto"></div><table class="k-tablo" id="detayTablo"></table></div>
+</div>
+
 <canvas id="konfeti"></canvas>
 
 <div class="sonuc" id="sonuc">
@@ -271,7 +324,7 @@
 
 <script>
   const EXEC = 'https://script.google.com/macros/s/AKfycbxPb8YtbNeb3djhwXejmlLairxxiba7KviGjnzifq0pLzXhbt3vI4WFeY6TJaJ2XuPIgA/exec';
-  const L = {"tedarikci": ["Halıcızade", "Doğuş Halı", "Eko Halı", "Empera", "Caché İstanbul", "Studio Potato", "Diğer"], "urunTipi": ["El Dokuması Halı", "El Dokuma Kilim", "Tezgah Dokuma Halı", "Tezgah Dokuma Kilim", "Makine Halısı", "Makine Dokuma Kilim", "Dijital Baskı Halı", "Deri Halı", "Deri - Post Halı", "Post", "Seccade", "Deri Yastık", "Aksesuar"], "uretimYeri": ["Türkiye", "Hindistan", "Afganistan", "Pakistan", "İran", "Nepal", "Diğer"], "tarz": ["Klasik", "Otantik", "Modern"], "renk": ["Antrasit", "Bakır", "Bej", "Beyaz", "Bordo", "Gri", "Kahverengi", "Kırmızı", "Krem", "Lacivert", "Mavi", "Mor", "Pembe", "Rengarenk", "Sarı", "Siyah", "Terra", "Turkuaz", "Turuncu", "Vizon", "Yeşil"], "iplik": ["Yün", "İpek", "Pamuk", "Viskon", "Bambu Viskon", "Tencel®", "Kendir", "Jüt / Hasır", "Akrilik / Sentetik", "Deri", "Kuzu Postu"], "desen": ["Afgan", "Anadolu", "Çerçeve", "Çiçek", "Çizgi", "Damask", "Etnik", "Geometrik", "İskandinav", "Karabağ", "Memlük", "Patchwork", "Sade", "Soyut", "Uşak", "Vintage", "Yağcıbedir", "Diğer"], "temizlik": ["Profesyonel Yıkama", "Makinede Yıkanabilir", "Silinebilir"], "kondisyon": ["Yeni", "Temiz İkinci El", "Sandık Yenisi"], "paraBirimi": ["TL", "USD", "EUR"], "seri": ["Anadolu Şal", "Başbaşa", "Efsun", "Gessi", "Günyolu", "Harem", "Heritage", "Kadim", "Kehribar", "Kendir", "Maison", "Mihman", "Nostalji", "Ottoman", "Pinhan", "Rast", "Retro", "Sekoya", "Sisal", "Taftan", "Tempus", "Velvet", "Versace", "Zade", "Zara", "Zima", "Şahzade"]};
+  const L = {"tedarikci": ["Halıcızade", "Doğuş Halı", "Eko Halı", "Empera", "Caché İstanbul", "Studio Potato", "Diğer"], "urunTipi": ["El Dokuması Halı", "El Dokuma Kilim", "Tezgah Dokuma Halı", "Tezgah Dokuma Kilim", "Makine Halısı", "Makine Dokuma Kilim", "Dijital Baskı Halı", "Deri Halı", "Deri - Post Halı", "Post", "Seccade", "Deri Yastık", "Aksesuar"], "uretimYeri": ["Türkiye", "Hindistan", "Afganistan", "Pakistan", "İran", "Nepal", "Diğer"], "tarz": ["Klasik", "Otantik", "Modern"], "renk": ["Antrasit", "Bakır", "Bej", "Beyaz", "Bordo", "Gri", "Kahverengi", "Kırmızı", "Krem", "Lacivert", "Mavi", "Mor", "Pembe", "Rengarenk", "Sarı", "Siyah", "Terra", "Turkuaz", "Turuncu", "Vizon", "Yeşil"], "iplik": ["Yün", "İpek", "Pamuk", "Viskon", "Bambu Viskon", "Tencel®", "Kendir", "Jüt / Hasır", "Akrilik / Sentetik", "Deri", "Kuzu Postu"], "desen": ["Afgan", "Anadolu", "Çerçeve", "Çiçek", "Çizgi", "Damask", "Etnik", "Geometrik", "Hereke", "İskandinav", "Karabağ", "Memlük", "Patchwork", "Sade", "Soyut", "Uşak", "Vintage", "Yağcıbedir", "Diğer"], "temizlik": ["Profesyonel Yıkama", "Makinede Yıkanabilir", "Silinebilir"], "kondisyon": ["Yeni", "Temiz İkinci El", "Sandık Yenisi"], "paraBirimi": ["TL", "USD", "EUR"], "seri": ["Anadolu Şal", "Başbaşa", "Efsun", "Gessi", "Günyolu", "Harem", "Heritage", "Kadim", "Kehribar", "Kendir", "Maison", "Mihman", "Nostalji", "Ottoman", "Pinhan", "Rast", "Retro", "Sekoya", "Sisal", "Taftan", "Tempus", "Velvet", "Versace", "Zade", "Zara", "Zima", "Şahzade"]};
   function sunucu(govde, deneme) {
     deneme = deneme || 0;
     return fetch(EXEC, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(govde) })
@@ -472,6 +525,7 @@
       satis: $('satis').value.trim(), satisParaBirimi: $('satisParaBirimi').value,
       urunTipi: $('urunTipi').value, uretimYeri: $('uretimYeri').value,
       desen: secili('desen')[0] === 'Diğer' ? $('desenDiger').value.trim() : (secili('desen')[0] || ''),
+      desenKodu: $('desenKodu').value.trim(),
       tarz: secili('tarz').join(', '), anaRenk: secili('anaRenk')[0] || '', destekRenk: secili('destekRenk'),
       iplik: secili('iplik'),
       kokBoya: $('kokBoya').getAttribute('aria-pressed') === 'true' ? 'Var' : 'Yok',
@@ -592,6 +646,81 @@
     $('form').classList.remove('gizli'); $('altCubuk').classList.remove('gizli'); $('ilerleme').classList.remove('gizli');
     adimGoster(ad ? 1 : 0);
   });
+
+  /* ---------- Geçmiş künyeler: herkes görür (mağaza koduyla), alış fiyatı gösterilmez ---------- */
+  const gecmis = { liste: null, fotolar: {} };
+  const kodOku = () => { try { return localStorage.getItem('hz_servis_kod') || ''; } catch (e) { return ''; } };
+  const kodYaz = k => { try { k ? localStorage.setItem('hz_servis_kod', k) : localStorage.removeItem('hz_servis_kod'); } catch (e) {} };
+  function gecmisHata(m) { $('gecmisHata').textContent = m || ''; $('gecmisHata').classList.toggle('gizli', !m); }
+  function gecmisAc() {
+    $('gecmis').classList.remove('gizli'); document.body.style.overflow = 'hidden';
+    gecmisHata('');
+    if (!kodOku()) { $('gecmisGiris').classList.remove('gizli'); $('gecmisIcerik').classList.add('gizli'); setTimeout(() => $('gecmisKod').focus(), 50); return; }
+    gecmisYukle();
+  }
+  function gecmisKapat() { $('gecmis').classList.add('gizli'); document.body.style.overflow = ''; }
+  function gecmisYukle() {
+    $('gecmisGiris').classList.add('gizli'); $('gecmisIcerik').classList.remove('gizli');
+    if (!gecmis.liste) $('gecmisListe').innerHTML = '<div class="k-bos">Künyeler yükleniyor…</div>';
+    return sunucu({ islem: 'kunyeler', kod: kodOku() })
+      .then(r => { gecmis.liste = r.kunyeler || []; gecmisCiz(); })
+      .catch(e => {
+        if (/kod/i.test(e.message)) { kodYaz(''); $('gecmisGiris').classList.remove('gizli'); $('gecmisIcerik').classList.add('gizli'); }
+        gecmisHata(e.message);
+      });
+  }
+  const olcuYazi = k => k.cap ? 'Ø' + k.cap : (k.en && k.boy ? k.en + '×' + k.boy : '');
+  function gecmisCiz() {
+    const q = $('gecmisAra').value.trim().toLocaleLowerCase('tr');
+    const liste = (gecmis.liste || []).filter(k => !q ||
+      [k.no, k.seri, k.tedarikci, k.desen, k.desenKodu, k.acan, k.urunTipi, k.fatura].join(' ').toLocaleLowerCase('tr').indexOf(q) >= 0);
+    const kutu = $('gecmisListe'); kutu.textContent = '';
+    if (!liste.length) {
+      const b = document.createElement('div'); b.className = 'k-bos';
+      b.textContent = q ? 'Bu aramayla künye bulunamadı.' : 'Henüz künye yok.'; kutu.appendChild(b); return;
+    }
+    liste.forEach(k => {
+      const c = document.createElement('button'); c.type = 'button'; c.className = 'k-kart';
+      c.innerHTML = '<div class="bas2"><b></b><span></span></div><div class="ozet"></div>';
+      c.querySelector('b').textContent = k.no + ' · ' + (k.seri || '—');
+      c.querySelector('.bas2 span').textContent = (k.tarih || '').slice(0, 10);
+      c.querySelector('.ozet').textContent = [olcuYazi(k), k.urunTipi, k.desen + (k.desenKodu ? ' (' + k.desenKodu + ')' : ''), k.tedarikci, k.acan].filter(Boolean).join(' · ');
+      c.addEventListener('click', () => detayAc(k));
+      kutu.appendChild(c);
+    });
+  }
+  function detayAc(k) {
+    $('detayBaslik').textContent = k.no + ' · ' + (k.seri || '');
+    const satirlar = [
+      ['Tarih', k.tarih], ['Künyeyi açan', k.acan], ['Tedarikçi', k.tedarikci], ['Seri', k.seri],
+      ['Ürün tipi', k.urunTipi], ['Üretim yeri', k.uretimYeri], ['Desen', k.desen], ['Desen kodu', k.desenKodu], ['Tarz', k.tarz],
+      ['Ana renk', k.anaRenk], ['Destekleyici renkler', k.destekRenk], ['İplik', k.iplik], ['Kök boya', k.kokBoya],
+      ['Temizlik', k.temizlik], ['Antika / yaş', k.antika], ['Ölçü (cm)', olcuYazi(k)],
+      ['Alan', k.m2 ? String(k.m2).replace('.', ',') + ' m²' + (k.grup ? ' · ' + k.grup : '') : ''],
+      ['Adet', k.adet], ['Kondisyon', k.kondisyon], ['Fatura / irsaliye no', k.fatura],
+      ['Satış fiyatı', k.satis ? Number(k.satis).toLocaleString('tr-TR') + ' ' + (k.satisParaBirimi || '') : ''], ['Not', k.not]
+    ].filter(r => r[1] !== '' && r[1] !== undefined && r[1] !== null);
+    const t = $('detayTablo'); t.textContent = '';
+    satirlar.forEach(([a, b]) => { const tr = document.createElement('tr'); const th = document.createElement('th'), td = document.createElement('td'); th.textContent = a; td.textContent = b; tr.append(th, td); t.appendChild(tr); });
+    const f = $('detayFoto'); f.style.backgroundImage = ''; f.textContent = k.onId ? 'Fotoğraf yükleniyor…' : 'Fotoğraf yok';
+    if (k.onId) {
+      const goster = v => { if ($('detayBaslik').textContent.indexOf(k.no) === 0) { f.textContent = ''; f.style.backgroundImage = 'url("' + v + '")'; } };
+      if (gecmis.fotolar[k.onId]) goster(gecmis.fotolar[k.onId]);
+      else sunucu({ islem: 'kunyeFoto', id: k.onId, kod: kodOku() }).then(r => { gecmis.fotolar[k.onId] = r.veri; goster(r.veri); }).catch(() => { f.textContent = 'Fotoğraf açılamadı'; });
+    }
+    $('kunyeDetay').classList.remove('gizli'); $('kunyeDetay').scrollTop = 0;
+  }
+  $('gecmisAc').addEventListener('click', gecmisAc);
+  $('gecmisKapat').addEventListener('click', gecmisKapat);
+  $('detayKapat').addEventListener('click', () => $('kunyeDetay').classList.add('gizli'));
+  $('gecmisAra').addEventListener('input', gecmisCiz);
+  function kodGonder() {
+    const k = $('gecmisKod').value.trim(); if (!k) return;
+    kodYaz(k); $('gecmisKod').value = ''; gecmisHata(''); gecmisYukle();
+  }
+  $('gecmisKodDugme').addEventListener('click', kodGonder);
+  $('gecmisKod').addEventListener('keydown', e => { if (e.key === 'Enter') kodGonder(); });
+  if (location.hash === '#gecmis') gecmisAc();
 
   olcuGuncelle();
   adimGoster(0);
