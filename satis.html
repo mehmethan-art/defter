@@ -44,6 +44,11 @@
   .satir .sag{text-align:right;flex:none}
   .satir .tutar{display:block;font-weight:700;font-variant-numeric:tabular-nums}
   .etk{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 8px;margin-top:3px}
+  .muh-ozet{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:12px 0 0;padding:14px 16px;border-radius:14px;
+    background:var(--bekliyor-acik);color:var(--bekliyor)}
+  .muh-ozet span{font-size:14px;font-weight:600}
+  .muh-ozet b{font-size:22px;font-variant-numeric:tabular-nums;margin-left:auto}
+  .muh-ozet small{flex-basis:100%;text-align:right;font-size:13px;opacity:.85}
   .etk.Bekliyor{color:var(--bekliyor);background:var(--bekliyor-acik)}
   .etk.Kesildi{color:var(--kesildi);background:var(--kesildi-acik)}
   .etk.İptal{color:var(--iptal);background:var(--iptal-acik)}
@@ -136,6 +141,7 @@
       <button class="cip" type="button" data-filtre="Bekliyor" id="fBekleyen">Fatura bekleyen</button>
       <button class="cip" type="button" data-filtre="Tümü" id="fTumu">Tümü</button>
     </div>
+    <div class="muh-ozet" id="muhOzet" hidden><span>Fatura bekleyen toplam</span><b id="muhOzetTutar"></b><small id="muhOzetAdet"></small></div>
     <input class="ara" type="search" id="ara" placeholder="Ara: isim, telefon, satış no, stok kodu" aria-label="Satış ara" autocomplete="off">
 
     <h2 id="listeBaslik">Fatura bekleyen</h2>
@@ -358,6 +364,7 @@
     $('muhRozet').hidden = !durum.mkod;
     $('muhDugme').textContent = durum.mkod ? 'Muhasebe girişinden çık' : 'Muhasebe girişi';
     if (durum.acik) detayCiz(durum.acik);
+    filtreCiz();
   }
   $('muhDugme').addEventListener('click', () => {
     if (durum.mkod) { yaz('hz_muhasebe_kod', ''); durum.mkod = ''; muhGuncelle(); tost('Muhasebe girişinden çıkıldı'); return; }
@@ -381,6 +388,13 @@
     $('fBekleyen').textContent = 'Fatura bekleyen' + (bekleyen ? ' (' + bekleyen + ')' : '');
     $('fBekleyen').setAttribute('aria-pressed', durum.filtre === 'Bekliyor' ? 'true' : 'false');
     $('fTumu').setAttribute('aria-pressed', durum.filtre === 'Tümü' ? 'true' : 'false');
+    // Yalnız muhasebe girişinde: faturası bekleyen satışların KDV dahil toplamı
+    const bek = durum.satislar.filter(s => s.durum === 'Bekliyor');
+    $('muhOzet').hidden = !durum.mkod;
+    if (durum.mkod) {
+      $('muhOzetTutar').textContent = tl(bek.reduce((t, s) => t + (Number(s.toplam) || 0), 0));
+      $('muhOzetAdet').textContent = bek.length ? bek.length + ' satış · KDV dahil' : 'Faturası bekleyen satış yok';
+    }
   }
   document.querySelectorAll('[data-filtre]').forEach(b => b.addEventListener('click', () => { durum.filtre = b.dataset.filtre; ciz(); }));
 
