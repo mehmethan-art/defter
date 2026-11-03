@@ -213,7 +213,7 @@
         <button class="cip" type="button" id="fFarkli">Farklı (firma vb.)</button>
       </div>
       <div id="faturaAyni">
-        <div class="alan"><label class="bas" for="fTc">T.C. Kimlik No <small>(isteğe bağlı)</small></label><input type="text" id="fTc" inputmode="numeric" autocomplete="off" maxlength="11"></div>
+        <div class="alan"><label class="bas" for="fTc">T.C. Kimlik No / Vergi No <small>(isteğe bağlı)</small></label><input type="text" id="fTc" inputmode="numeric" autocomplete="off" maxlength="11" placeholder="11 hane T.C. ya da 10 hane vergi no"><div class="bilgi" id="fTcIpucu" hidden></div></div>
       </div>
       <div id="faturaFarkli" hidden>
         <div class="alan"><label class="bas" for="fUnvan">Ünvan</label><input type="text" id="fUnvan" autocomplete="off"></div>
@@ -540,7 +540,7 @@
     const d3 = el('div', 'blok'); d3.appendChild(el('h3', null, s.faturaFarkli ? 'Fatura (farklı)' : 'Fatura (teslimatla aynı)'));
     tanim(d3, s.faturaFarkli
       ? [['Ünvan', s.fUnvan], ['E-posta', epostaDuzelt(s.fEposta)], ['Vergi dairesi', s.vergiDairesi], ['Kimlik / Vergi No', s.kimlikNo], ['Adres', adres(s.fMahalle, s.fCadde, s.fKapi, s.fSemt, s.fSehir)]]
-      : [['Ad soyad', s.musteri], ['T.C. Kimlik No', s.kimlikNo || '—']]);
+      : [['Ad soyad', s.musteri], [kimlikEtiket(s.kimlikNo), s.kimlikNo || '—']]);
     g.appendChild(d3);
 
     const d4 = el('div', 'blok'); d4.appendChild(el('h3', null, 'Ürünler'));
@@ -594,6 +594,15 @@
       .then(r => { satisGuncelle(r.satis); durum.acik = r.satis; detayCiz(r.satis); tost(s.no + (yeni === 'Kesildi' ? ' faturası kesildi' : yeni === 'İptal' ? ' iptal edildi' : ' fatura bekliyor')); })
       .catch(e => { btn.disabled = false; btn.textContent = eski; tost(e.message, true); });
   }
+
+  /* 10 hane vergi no, 11 hane T.C. kimlik no */
+  function kimlikEtiket(n) { n = String(n || '').replace(/\D/g, ''); return n.length === 10 ? 'Vergi No' : 'T.C. Kimlik No'; }
+  function tcIpucu() {
+    const n = $('fTc').value.replace(/\D/g, ''), i = $('fTcIpucu');
+    i.hidden = !(n.length === 10 || n.length === 11);
+    i.textContent = n.length === 10 ? 'Vergi numarası olarak kaydedilecek' : 'T.C. kimlik no olarak kaydedilecek';
+  }
+  $('fTc').addEventListener('input', tcIpucu);
 
   /* ---- Form ---- */
   const ALANLAR = { musteri: 'fMusteri', telefon: 'fTelefon', eposta: 'fEposta', mahalle: 'fMahalle', cadde: 'fCadde', kapi: 'fKapi', semt: 'fSemt', sehir: 'fSehir',
@@ -755,6 +764,7 @@
     durum.faturaFarkli = !!s.faturaFarkli;
     $('fTc').value = s.faturaFarkli ? '' : (s.kimlikNo || '');
     $('fVn').value = s.faturaFarkli ? (s.kimlikNo || '') : '';
+    tcIpucu();
     durum.kalemler = (s.kalemler && s.kalemler.length ? s.kalemler : [bosKalem()]).map(k => ({
       barkod: k.barkod || '', stok: k.stok || '', olcu: k.olcu || '', adet: String(k.adet || 1),
       fiyat: typeof k.fiyat === 'number' ? sayiYaz(k.fiyat) : (k.fiyat || ''), siparis: !!k.siparis }));
@@ -804,7 +814,7 @@
         formDoldur(Object.assign({}, t, { kimlikNo: '' }));
         durum.kalemler = t.kalemler && t.kalemler.length ? t.kalemler : [bosKalem()];
         durum.odemeler = t.odemeler || [];
-        $('fTc').value = t.tc || ''; $('fVn').value = t.vn || '';
+        $('fTc').value = t.tc || ''; $('fVn').value = t.vn || ''; tcIpucu();
         if (!t.sehir) $('fSehir').value = '';
         kalemCiz(); odemeCiz();
         $('taslakSil').hidden = false;
