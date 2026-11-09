@@ -129,6 +129,8 @@
   .k-tablo td{padding:9px 12px;border-bottom:1px solid var(--cizgi);font-weight:600;overflow-wrap:anywhere}
   .k-tablo tr:last-child th,.k-tablo tr:last-child td{border-bottom:0}
   .k-hata{background:#fdecea;color:var(--hata);border-radius:12px;padding:12px;margin-top:12px}
+/* Kod alanı: noktalı görünür ama "şifre" sayılmaz; Chrome kayıtlı e-postaları yan kutulara doldurmasın */
+.kod-alan{-webkit-text-security:disc;text-security:disc}
 </style>
 </head>
 <body>
@@ -296,7 +298,7 @@
   <div class="govde">
     <div id="gecmisGiris" class="gizli">
       <p style="margin:4px 0 12px;color:var(--soluk)">Mağaza kodunu girin. Bu telefonda bir kez sorulur.</p>
-      <input type="password" id="gecmisKod" inputmode="numeric" autocomplete="off" placeholder="Mağaza kodu" aria-label="Mağaza kodu">
+      <input type="text" class="kod-alan" id="gecmisKod" inputmode="numeric" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="Mağaza kodu" aria-label="Mağaza kodu">
       <button type="button" id="gecmisKodDugme" style="width:100%;margin-top:10px;padding:15px;border:0;border-radius:14px;background:var(--vurgu);color:#fff;font:inherit;font-weight:700;cursor:pointer">Künyeleri aç</button>
     </div>
     <div id="gecmisIcerik" class="gizli">
