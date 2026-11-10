@@ -190,6 +190,21 @@
   .etiket-ekle{width:100%;border:1px dashed var(--soluk);border-radius:14px;background:none;padding:14px;font-weight:600;cursor:pointer;color:var(--yazi);margin-top:10px}
   .etiket-toplam{font-size:14px;color:var(--soluk);margin-top:8px}
   .kart .etiket-ozet{font-size:14px;margin-top:4px;color:var(--yazi)}
+  /* Dönüşte halı durumu */
+  .hali-durum{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px dashed var(--cizgi);padding-top:8px}
+  .hali-durum .cip{padding:8px 12px;font-size:14px}
+  .hali-durum .cip[data-r=geldi][aria-pressed=true]{background:var(--tamam);border-color:var(--tamam)}
+  .hali-durum .cip[data-r=rezerve][aria-pressed=true]{background:#8a5a00;border-color:#8a5a00}
+  .hali-durum .cip[data-r=satildi][aria-pressed=true]{background:#2f5577;border-color:#2f5577}
+  .hali-durum .ayir{border:0;background:none;color:var(--vurgu);font-weight:600;font-size:13px;cursor:pointer;padding:6px 4px;margin-left:auto}
+  .hali-durum .bekliyor{font-size:13px;color:var(--soluk);width:100%}
+  .durum-ozet{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .rozet.h-geldi{background:var(--tamam-acik);color:var(--tamam);font-weight:500}
+  .rozet.h-rezerve{background:#fbf0d9;color:#8a5a00}
+  .rozet.h-satildi{background:#e6eef5;color:#2f5577;font-weight:500}
+  .rozet.h-bekliyor{background:#fbe9e7;color:#b3261e;font-weight:500}
+  .rozet.cari-yeni{background:#e6eef5;color:#2f5577}
+  .cari .cip{flex:1;text-align:center}
   .buyuk{position:fixed;inset:0;background:rgba(20,17,15,.94);z-index:40;display:flex;flex-direction:column}
   .buyuk .ust2{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;color:#fff}
   .buyuk .ust2 button{border:1px solid rgba(255,255,255,.4);background:none;color:#fff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer}
@@ -299,6 +314,13 @@
         <input type="text" id="fMusteri" autocapitalize="words" autocomplete="off">
       </div>
       <div class="alan">
+        <span class="bas" id="cariBaslik">Cari</span>
+        <div class="cipler cari" id="cariCipler" role="group" aria-labelledby="cariBaslik">
+          <button type="button" class="cip" data-cari="Mevcut">Mevcut cari</button>
+          <button type="button" class="cip" data-cari="Yeni">Yeni cari</button>
+        </div>
+      </div>
+      <div class="alan">
         <label class="bas" for="fTelefon">Telefon <small>(isteğe bağlı)</small></label>
         <input type="tel" id="fTelefon" inputmode="tel" autocomplete="off" placeholder="05xx xxx xx xx">
       </div>
@@ -327,7 +349,7 @@
         </div>
       </div>
       <div class="alan">
-        <label class="bas" id="etiketBaslik">Servise giden halılar <small>(her halı için bir etiket fotoğrafı ve adet)</small></label>
+        <label class="bas" id="etiketBaslik">Servise giden halılar <small>(her halı için bir etiket fotoğrafı ve adet; dönüşte her halının durumunu seçin)</small></label>
         <div class="etiketler" id="etiketler" aria-labelledby="etiketBaslik"></div>
         <button type="button" class="etiket-ekle" id="etiketEkle">📷 Halı ekle</button>
         <input type="file" id="etiketDosya" accept="image/*" hidden>
@@ -599,15 +621,41 @@
       const o = document.createElement('div'); o.className = 'etiket-ozet';
       o.textContent = '📷 ' + etiketOzet(k.etiketler);
       c.querySelector('.adres').after(o);
+      const dz = durumOzetYap(k);
+      if (dz) o.after(dz);
     }
     if (k.halilar) { const h = c.querySelector('.halilar'); h.hidden = false; h.textContent = 'Halılar: ' + k.halilar; }
     const alt = c.querySelector('.alt');
     k.personel.forEach(p => { const r = document.createElement('span'); r.className = 'rozet kisi'; r.textContent = p; alt.appendChild(r); });
     (k.sebep || []).forEach(x => { const r = document.createElement('span'); r.className = 'rozet sebep'; r.textContent = x; alt.appendChild(r); });
+    if (k.cari === 'Yeni') { const r = document.createElement('span'); r.className = 'rozet cari-yeni'; r.textContent = 'Yeni cari'; alt.appendChild(r); }
     if (k.acan) { const a = document.createElement('span'); a.className = 'acan'; a.textContent = 'Açan: ' + k.acan; alt.appendChild(a); }
     c.addEventListener('click', () => formAc(k));
     return c;
   }
+
+  /* Kartta halıların dönüş durumu: "2 geri geldi · 1 rezerve · 1 satıldı"; tamamlanmış serviste durumu seçilmemiş halı kırmızı görünür */
+  const HALI_DURUM = { geldi: '↩ Geri geldi', rezerve: 'Müşteride (rezerve)', satildi: 'Satıldı' };
+  const HALI_KISA = { geldi: 'geri geldi', rezerve: 'rezerve', satildi: 'satıldı' };
+  function durumOzetYap(k) {
+    const say = { geldi: 0, rezerve: 0, satildi: 0, bos: 0 };
+    (k.etiketler || []).forEach(e => { say[HALI_DURUM[e.r] ? e.r : 'bos'] += Number(e.a) || 0; });
+    if (!say.geldi && !say.rezerve && !say.satildi && (k.durum !== 'Tamamlandı' || !say.bos)) return null;
+    const d = document.createElement('div'); d.className = 'durum-ozet';
+    ['rezerve', 'satildi', 'geldi'].forEach(r => {
+      if (!say[r]) return;
+      const x = document.createElement('span'); x.className = 'rozet h-' + r; x.textContent = say[r] + ' ' + HALI_KISA[r]; d.appendChild(x);
+    });
+    if (say.bos && k.durum !== 'İptal') {
+      const x = document.createElement('span'); x.className = 'rozet h-bekliyor'; x.textContent = say.bos + ' halının durumu girilmedi'; d.appendChild(x);
+    }
+    return d;
+  }
+
+  /* ---------- Cari ---------- */
+  let seciliCari = '';
+  function cariCiz() { document.querySelectorAll('#cariCipler .cip').forEach(b => b.setAttribute('aria-pressed', b.dataset.cari === seciliCari ? 'true' : 'false')); }
+  document.querySelectorAll('#cariCipler .cip').forEach(b => b.addEventListener('click', () => { seciliCari = b.dataset.cari; cariCiz(); }));
 
   /* ---------- Form ---------- */
   const SAATLER = [];
@@ -676,7 +724,7 @@
   }
 
   let seciliDurum = 'Planlandı';
-  document.querySelectorAll('#durumlar .cip').forEach(b => b.addEventListener('click', () => { seciliDurum = b.dataset.durum; durumCiz(); }));
+  document.querySelectorAll('#durumlar .cip').forEach(b => b.addEventListener('click', () => { seciliDurum = b.dataset.durum; durumCiz(); cakismaTemizle(); }));
   function durumCiz() { document.querySelectorAll('#durumlar .cip').forEach(b => b.setAttribute('aria-pressed', b.dataset.durum === seciliDurum ? 'true' : 'false')); }
 
   function formAc(k) {
@@ -695,7 +743,9 @@
     seciliAcan = (k && k.acan) || durum.kim;
     seciliSebep = k && k.sebep ? k.sebep.slice() : [];
     seciliDurum = k ? k.durum : 'Planlandı';
-    etiketSatirlari = (k && k.etiketler ? k.etiketler : []).map(e => ({ anahtar: ++etiketSayac, f: e.f, a: e.a, durum: 'tamam' }));
+    etiketSatirlari = (k && k.etiketler ? k.etiketler : []).map(e => ({ anahtar: ++etiketSayac, f: e.f, a: e.a, r: e.r || '', durum: 'tamam' }));
+    seciliCari = k ? (k.cari || '') : '';
+    cariCiz();
     etiketCiz();
     $('durumBlok').hidden = !k;
     durumCiz();
@@ -740,7 +790,8 @@
       adres: $('fAdres').value.trim(), semt: $('fSemt').value.trim(),
       personel: seciliPersonel.slice(), halilar: $('fHalilar').value.trim(), not: $('fNot').value.trim(),
       durum: seciliDurum, kim: durum.kim, acan: seciliAcan || durum.kim, sebep: seciliSebep.slice(),
-      etiketler: etiketSatirlari.filter(e => e.f).map(e => ({ f: e.f, a: e.a }))
+      etiketler: etiketSatirlari.filter(e => e.f).map(e => e.r ? { f: e.f, a: e.a, r: e.r } : { f: e.f, a: e.a }),
+      cari: seciliCari
     };
   }
 
@@ -749,7 +800,7 @@
   const fotoBellek = {};                        // Drive kimliği → görüntü (yalnız bu oturumda)
   function etiketOzet(liste) {
     const adet = liste.reduce((t, e) => t + (Number(e.a) || 0), 0);
-    return liste.length + ' çeşit halı · toplam ' + adet + ' adet';
+    return new Set(liste.map(e => e.f)).size + ' çeşit halı · toplam ' + adet + ' adet';
   }
   function etiketToplamCiz() {
     const t = $('etiketToplam'), hazir = etiketSatirlari.filter(e => e.f);
@@ -802,10 +853,36 @@
       s.querySelector('.etiket-sil').addEventListener('click', () => {
         etiketSatirlari = etiketSatirlari.filter(x => x !== e); etiketCiz();
       });
+      if (durum.duzenlenen && e.f) s.appendChild(haliDurumYap(e, i));
       kutu.appendChild(s);
     });
     $('etiketEkle').textContent = etiketSatirlari.length ? '📷 Bir halı daha ekle' : '📷 Halı ekle';
     etiketToplamCiz();
+  }
+
+  /* Dönüşte: Geri geldi / Müşteride (rezerve) / Satıldı. Aynı halıdan birkaç adet gidip farklı sonuçlandıysa "Ayır" ile satır bölünür. */
+  function haliDurumYap(e, i) {
+    const d = document.createElement('div'); d.className = 'hali-durum';
+    d.setAttribute('role', 'group'); d.setAttribute('aria-label', (i + 1) + '. halının dönüş durumu');
+    Object.keys(HALI_DURUM).forEach(r => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'cip'; b.dataset.r = r; b.textContent = HALI_DURUM[r];
+      b.setAttribute('aria-pressed', e.r === r ? 'true' : 'false');
+      b.addEventListener('click', () => { e.r = e.r === r ? '' : r; cakismaTemizle(); etiketCiz(); });
+      d.appendChild(b);
+    });
+    if (e.a > 1) {
+      const a = document.createElement('button'); a.type = 'button'; a.className = 'ayir'; a.textContent = '⇆ 1 adedi ayır';
+      a.setAttribute('aria-label', (i + 1) + '. halıdan 1 adedi ayrı satıra al');
+      a.addEventListener('click', () => {
+        if (etiketSatirlari.length >= 30) { tost('Bir serviste en çok 30 halı satırı olabilir.', true); return; }
+        e.a -= 1;
+        etiketSatirlari.splice(etiketSatirlari.indexOf(e) + 1, 0, { anahtar: ++etiketSayac, f: e.f, a: 1, r: '', durum: 'tamam' });
+        cakismaTemizle(); etiketCiz();
+      });
+      d.appendChild(a);
+    }
+    if (!e.r) { const y = document.createElement('div'); y.className = 'bekliyor'; y.textContent = 'Servis dönüşünde bu halının durumunu seçin.'; d.appendChild(y); }
+    return d;
   }
 
   /* Telefon fotoğrafı büyüktür: uzun kenar 1600 piksele indirilir (etiket yazısı okunur kalır), JPEG olarak gönderilir */
@@ -862,6 +939,7 @@
     const e = [];
     if (!v.tarih) e.push('gün');
     if (!v.musteri) e.push('müşteri adı');
+    if (!v.no && !v.cari) e.push('cari (mevcut / yeni)');
     if (!v.adres) e.push('adres');
     if (!v.personel.length) e.push('gidecek personel');
     if (!v.sebep.length && v.durum === 'Planlandı') e.push('servis sebebi');
@@ -890,6 +968,15 @@
     if (etiketSatirlari.some(e => e.durum === 'hata')) {
       $('formHata').hidden = false; $('formHata').textContent = 'Gönderilemeyen etiket fotoğrafı var: “Tekrar dene”ye basın ya da o satırı silin.';
       $('formKatman').scrollTop = 0; return;
+    }
+    const durumsuz = v.durum === 'Tamamlandı' ? etiketSatirlari.map((e, i) => e.f && !e.r ? i + 1 : 0).filter(Boolean) : [];
+    if (durumsuz.length && !durum.onayBekliyor) {
+      durum.onayBekliyor = true;
+      $('formUyari').hidden = false;
+      $('formUyari').textContent = 'Dikkat: ' + durumsuz.join(', ') + '. halının dönüş durumu seçilmedi (geri geldi / rezerve / satıldı). Yine de kaydetmek için butona bir kez daha basın.';
+      $('kaydetDugme').classList.add('uyar'); $('kaydetDugme').textContent = 'Yine de kaydet';
+      $('formKatman').scrollTop = 0;
+      return;
     }
     const izinli = v.personel.filter(p => izinliMi(p, v.tarih));
     if (izinli.length && !durum.onayBekliyor) {

@@ -74,7 +74,7 @@
   .blok>h3{margin:0 0 14px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--soluk)}
   .alan{margin:0 0 14px}
   .alan:last-child{margin-bottom:0}
-  label.bas{display:block;font-weight:600;margin:0 0 6px;font-size:15px}
+  label.bas,span.bas{display:block;font-weight:600;margin:0 0 6px;font-size:15px}
   label.bas small{font-weight:400;color:var(--soluk)}
   input[type=date],input[type=password],input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;font:inherit;padding:12px 12px;border:1px solid var(--cizgi);border-radius:12px;
     background:#fff;color:var(--yazi);-webkit-appearance:none;appearance:none;min-height:48px}
@@ -92,6 +92,8 @@
   .kalem{border:1px solid var(--cizgi);border-radius:14px;padding:12px;margin:0 0 10px;background:#fcfaf7}
   .kalem-ust{display:flex;align-items:center;gap:8px;margin:0 0 10px}
   .kalem-ust b{flex:1}
+  .cari .cip{flex:1;text-align:center}
+  .yeni-cari{color:#2f5577;font-weight:600}
   .kucuk-cip{border:1px solid var(--cizgi);background:#fff;border-radius:999px;padding:6px 11px;font-size:13px;cursor:pointer}
   .kucuk-cip[aria-pressed=true]{background:var(--yazi);border-color:var(--yazi);color:#fff}
   .sil-x{border:1px solid var(--cizgi);background:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;color:var(--hata);font-size:18px;line-height:1;flex:none}
@@ -197,6 +199,11 @@
     <div class="blok">
       <h3>Teslimat adresi</h3>
       <div class="alan"><label class="bas" for="fMusteri">İsim soyisim</label><input type="text" id="fMusteri" autocomplete="off" autocapitalize="words"></div>
+      <div class="alan"><span class="bas" id="cariBaslik">Cari</span>
+        <div class="cipler cari" id="cariCipler" role="group" aria-labelledby="cariBaslik">
+          <button type="button" class="cip" data-cari="Mevcut">Mevcut cari</button>
+          <button type="button" class="cip" data-cari="Yeni">Yeni cari</button>
+        </div></div>
       <div class="alan"><label class="bas" for="fTelefon">Telefon</label><input type="tel" id="fTelefon" autocomplete="off" inputmode="tel"></div>
       <div class="alan"><label class="bas" for="fEposta">E-posta <small>(isteğe bağlı)</small></label><input type="text" inputmode="email" id="fEposta" autocomplete="off" autocapitalize="off" spellcheck="false"><div class="bilgi eposta-ipucu" id="fEpostaIpucu" hidden></div></div>
       <div class="alan"><label class="bas" for="fMahalle">Mahalle</label><input type="text" id="fMahalle" autocomplete="off"></div>
@@ -414,6 +421,7 @@
       b.innerHTML = '<span class="ic"><b></b><span class="alt-yazi"></span></span><span class="sag"><span class="tutar"></span><span class="etk"></span><span class="kalan" hidden></span></span>';
       b.querySelector('b').textContent = s.musteri + (s.faturaFarkli && s.fUnvan ? ' · ' + s.fUnvan : '');
       b.querySelector('.alt-yazi').textContent = s.no + ' · ' + kisaTarih(s.tarih) + ' · ' + s.temsilci;
+      if (s.cari === 'Yeni') b.querySelector('.alt-yazi').appendChild(el('span', 'yeni-cari', ' · Yeni cari'));
       b.querySelector('.tutar').textContent = tl(s.toplam);
       const e = b.querySelector('.etk'); e.textContent = s.durum === 'Bekliyor' ? 'Fatura bekliyor' : s.durum === 'Kesildi' ? 'Fatura kesildi' : 'İptal'; e.classList.add(s.durum);
       if (s.kalan > 0.004 && s.durum !== 'İptal') { const x = b.querySelector('.kalan'); x.hidden = false; x.textContent = 'Kalan ' + tl(s.kalan); }
@@ -543,6 +551,7 @@
     tanim(d3, s.faturaFarkli
       ? [['Ünvan', s.fUnvan], ['E-posta', epostaDuzelt(s.fEposta)], ['Vergi dairesi', s.vergiDairesi], ['Kimlik / Vergi No', s.kimlikNo], ['Adres', adres(s.fMahalle, s.fCadde, s.fKapi, s.fSemt, s.fSehir)]]
       : [['Ad soyad', s.musteri], [kimlikEtiket(s.kimlikNo), s.kimlikNo || '—']]);
+    tanim(d3, [['Cari', s.cari === 'Yeni' ? 'Yeni cari açılacak' : s.cari === 'Mevcut' ? 'Mevcut cari' : '—']]);
     g.appendChild(d3);
 
     const d4 = el('div', 'blok'); d4.appendChild(el('h3', null, 'Ürünler'));
@@ -756,7 +765,11 @@
     sel.value = secili || '';
   }
 
+  function cariCiz() { document.querySelectorAll('#cariCipler .cip').forEach(b => b.setAttribute('aria-pressed', b.dataset.cari === durum.cari ? 'true' : 'false')); }
+  document.querySelectorAll('#cariCipler .cip').forEach(b => b.addEventListener('click', () => { durum.cari = b.dataset.cari; cariCiz(); $('formHata').hidden = true; taslakSakla(); }));
+
   function formDoldur(s) {
+    durum.cari = s.cari || ''; cariCiz();
     $('fTarih').value = s.tarih || ymd(new Date());
     temsilciCiz(s.temsilci || durum.kim);
     Object.keys(ALANLAR).forEach(k => { $(ALANLAR[k]).value = s[k] || ''; });
@@ -780,6 +793,7 @@
     Object.keys(ALANLAR).forEach(k => { v[k] = $(ALANLAR[k]).value.trim(); });
     v.eposta = epostaDuzelt(v.eposta); v.fEposta = epostaDuzelt(v.fEposta);
     v.kimlikNo = (durum.faturaFarkli ? $('fVn').value : $('fTc').value).replace(/\D/g, '');
+    v.cari = durum.cari || '';
     v.kalemler = durum.kalemler.map(k => ({ barkod: k.barkod.trim(), stok: k.stok.trim(), olcu: k.olcu.trim(), adet: Math.round(Number(String(k.adet).replace(',', '.'))), fiyat: sayiOku(k.fiyat), siparis: k.siparis }))
       .filter(k => k.barkod || k.stok || k.olcu || k.fiyat > 0);
     v.odemeler = durum.odemeler.map(o => ({ sekil: o.sekil, tutar: sayiOku(o.tutar), taksit: Number(o.taksit) || 1, banka: o.sekil === 'Kredi kartı' ? (o.banka || '') : '' }))
@@ -846,6 +860,7 @@
     if (!v.temsilci) eksik.push('temsilci');
     if (!v.musteri) eksik.push('isim soyisim');
     if (!v.telefon) eksik.push('telefon');
+    if (!v.no && !v.cari) eksik.push('cari (mevcut / yeni)');
     if (!v.kalemler.length) eksik.push('en az bir ürün');
     if (v.faturaFarkli && !v.fUnvan) eksik.push('fatura ünvanı');
     if (v.faturaFarkli && !v.kimlikNo) eksik.push('kimlik no / vergi no');
